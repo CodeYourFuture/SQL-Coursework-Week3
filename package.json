@@ -1,0 +1,26 @@
+{
+  "name": "sql-coursework-week3",
+  "version": "1.0.0",
+  "description": "## Submission",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sadatakhtar/SQL-Coursework-Week3.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sadatakhtar/SQL-Coursework-Week3/issues"
+  },
+  "homepage": "https://github.com/sadatakhtar/SQL-Coursework-Week3#readme",
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
+    "nodemon": "^2.0.6",
+    "pg": "^8.5.1"
+  }
+}
