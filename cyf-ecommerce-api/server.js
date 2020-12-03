@@ -155,6 +155,32 @@ pool.query("SELECT * FROM customers WHERE id = $1", [customerId])
 });
 });
 
+app.delete("/orders/:orderId", function (req, res) {
+  const orderId = req.params.orderId;
+
+  pool
+    .query("DELETE FROM orders WHERE id=$1", [orderId])
+    .then(() => res.send(`Order ${orderId} deleted!`))
+    .catch((e) => console.error(e));
+});
+
+app.delete("/customers/:customerId", function (req, res) {
+  const customerId = req.params.customerId;
+
+  pool
+    .query("SELECT * FROM orders WHERE customer_id=$1", [customerId])
+    .then((result) => {
+      if (result.rows.length > 0) {
+        return res.status(400).send("This customer has existing orders.");
+      } else {
+        pool
+          .query("DELETE FROM customers WHERE id=$1", [customerId])
+          .then(() => res.send(`Customer ${customerId} deleted!`))
+          .catch((e) => console.error(e));
+      }
+    });
+});
+
 
 app.listen(3000, function () {
   console.log("Server is listening on port 3000. Ready to accept requests!");
