@@ -84,6 +84,35 @@ app.post("/customers", function (req, res) {
     });
 });
 
+
+
+app.post("/products", function (req, res) {
+  const newProductName = req.body.name;
+  const newProductPrice = req.body.price;
+  const newProductSupplier = req.body.supplier;
+
+  pool
+    .query("SELECT * FROM products WHERE supplier_id=$1", [newProductSupplier])
+    .then((result) => {
+      if (result.rows.length === 0) {
+        return res.status(400).send("This supplier ID does not exist.");
+      } else if (!Number.isInteger(newProductPrice) || newProductPrice <= 0) {
+  return res
+    .status(400)
+    .send("The price should be a positive integer.");
+} else {
+
+        const query =
+          "INSERT INTO products(product_name, unit_price, supplier_id) VALUES ($1, $2, $3)";
+        pool
+          .query(query, [newProductName, newProductPrice, newProductSupplier])
+          .then(() => res.send("Product created!"))
+          .catch((e) => console.error(e));
+      }
+    });
+});
+
+
 app.listen(3000, function () {
   console.log("Server is listening on port 3000. Ready to accept requests!");
 });
