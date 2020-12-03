@@ -181,6 +181,17 @@ app.delete("/customers/:customerId", function (req, res) {
     });
 });
 
+app.get("/customers/:customerId/orders", function (req, res) {
+  const customerId = req.params.customerId;
+
+  const query = "SELECT orders.order_reference, orders.order_date, products.product_name, products.unit_price, suppliers.supplier_name, order_items.quantity FROM orders INNER JOIN order_items ON orders.id = order_items.order_id INNER JOIN products ON order_items.product_id = products.id INNER JOIN suppliers ON suppliers.id = products.supplier_id WHERE customer_id = $1";
+
+  pool
+    .query(query, [customerId])
+    .then((result) => res.json(result.rows))
+    .catch((e) => console.error(e));
+})
+
 
 app.listen(3000, function () {
   console.log("Server is listening on port 3000. Ready to accept requests!");
