@@ -135,6 +135,26 @@ app.post("/customers/:customerId/orders", function (req, res) {
     });
 });
 
+app.put("/customers/:customerId", function (req, res) {
+  const customerId = req.params.customerId;
+  const newName = req.body.name;
+  const newAddress = req.body.address;
+  const newCity = req.body.city;
+  const newCountry = req.body.country;
+pool.query("SELECT * FROM customers WHERE id = $1", [customerId])
+.then((result) => {
+        if (result.rows.length === 0) {
+        return res.status(400).send("This customer ID does not exist.");
+      } else {
+        const query = "UPDATE customers SET name=$1, address=$2, city=$3, country=$4 WHERE id=$5";
+  pool
+    .query(query, [newName, newAddress, newCity, newCountry, customerId])
+    .then(() => res.send(`Customer ${customerId} updated!`))
+    .catch((e) => console.error(e));
+}
+});
+});
+
 
 app.listen(3000, function () {
   console.log("Server is listening on port 3000. Ready to accept requests!");
