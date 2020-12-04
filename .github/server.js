@@ -73,7 +73,12 @@
         }
         const newOrderDate = req.body.order_date;
         const newOrderReference = req.body.order_reference;
-        const newCustomerId = req.body.customer_id; 
+        const newCustomerId = req.params.customerId; 
+
+        if(typeof (newOrderDate)=="undefined" || typeof (newOrderReference)=="undefined" || typeof (newCustomerId)=="undefined" )
+        {
+         res.send("One of the fields is missing");
+        }
         pool
           .query("SELECT * FROM customers WHERE id =$1", [newCustomerId])
           .then((result) => {
@@ -82,12 +87,12 @@
                 .status(400)
                 .send(`Customer with the ${newCustomerId} does not exists!`);
             }});
-              const query =
-                "INSERT INTO orders (order_date, order_reference, customer_id) VALUES ($1, $2, $3)";
-              pool
-                .query(query, [newOrderDate, newOrderReference, newCustomerId])
-                .then(() => res.send("order has been created!"))
-                .catch((e) => console.error(e));
+        const query =
+          "INSERT INTO orders (order_date, order_reference, customer_id) VALUES ($1, $2, $3)";
+        pool
+          .query(query, [newOrderDate, newOrderReference, newCustomerId])
+          .then(() => res.send("order has been created!"))
+          .catch((e) => console.error(e));
       });
 
     //Get Customers By ID 
