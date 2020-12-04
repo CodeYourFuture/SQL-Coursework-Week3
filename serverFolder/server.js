@@ -73,14 +73,39 @@ app.get("/products",function(req,res){
     .catch((e)=>console.log(e));
   }
   
-   
+app.post("/customers",function (req,res){
+  let {name}=req.body;
+  let {address}=req.body;
+  let {city}=req.body;
+  let {country}=req.body;
+  console.log("i am wokring customers")
+  if(typeof (name)!="undefined" || typeof (address)!="undefined" || typeof (city)!="undefined" || typeof (country)!="undefined" )
+  {
+    const Query="INSERT INTO customers(name,address,city,country) VALUES($1,$2,$3,$4)";
+      pool.query(Query,[name,address,city,country])
+      .then(result=>res.send(result))
+      .catch((e)=>console.log(e));
+  }
+  
+  else{
+    res.send("Cannot write data , some field are missing")
+  }
+});
+
+// product name, a price and a supplier id
+
+
+
+
+
+
 
 });
 
 
 
 
-app.listen(3000,function(){
-  console.log("Listening at port 3000");
+app.listen(3001,function(){
+  console.log("Listening at port 3001");
 });
 
