@@ -28,6 +28,24 @@ app.get("/customers",function(req,res){
   .catch((e)=>console.log(e));
 });
 
+app.get("/customers/:customerId",function(req,res){
+
+  let {customerId}=req.params;
+  console.log(customerId)
+  if(typeof (customerId)!="undefined")
+  {
+    const Query="select * from customers where id=$1";
+    pool.query(Query,[customerId])
+    .then((result)=>res.send(result.rows))
+    .catch((e)=>console.log(e));
+  }
+  else{
+    res.send(false);
+    console.log("I am here");
+  }
+});
+
+
 app.get("/suppliers",function(req,res){
 
   const Query="select * from suppliers";
