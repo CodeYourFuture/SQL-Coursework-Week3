@@ -243,17 +243,7 @@ app.get("/customers/:customerId/orders",function (req,res){
 });
 
 
-// DELETE FROM table_name WHERE condition;
-
-
 
 app.listen(3001,function(){
   console.log("Listening at port 3001");
 });
-
-
-
-// select order_reference,order_date,unit_price,supplier_name,quantity from orders 
-// inner join order_items on order_items.order_id=orders.id
-// inner join products on products.id= order_items.product_id
-// inner join suppliers on suppliers.id=products.supplier_id where customer_id=1;
