@@ -159,6 +159,93 @@ app.post("/customers/:customerId/orders", function (req, res) {
     .catch((e) => console.error(e));
 });
 
+// UPDATE customers SET name = $1, address = £2, city=$3,country=$4 WHERE id=$5;
+
+
+app.put("/customers/:customerId",function (req,res){
+  let customer_id=req.params.customerId;
+  let {name}=req.body;
+  let {address}=req.body;
+  let {city}=req.body;
+  let {country}=req.body;
+  if(typeof (name)!="undefined" || typeof (address)!="undefined" || typeof (city)!="undefined" || typeof (country)!="undefined" || typeof (customer_id)!="undefined" )
+  {
+    const Query="UPDATE customers SET name = $1, address = $2, city=$3,country=$4 WHERE id=$5;";
+      pool.query(Query,[name,address,city,country,customer_id])
+      .then(result=>res.send("It has been updated")) // confirm this to check if it has een added or not.
+      .catch((e)=>console.log(e));
+  }
+  
+  else{
+    res.send("Cannot write data , some field are missing")
+  }
+});
+
+
+app.delete("/orders/:orderId",function (req,res){
+  if (!req.body) {
+    return res.status(400).send("Body not found");
+  }
+ 
+  let order_id=req.params.orderId;
+
+ if(typeof (order_id)=="undefined" )
+  {
+    res.send("id is missing");
+  }
+  const Query="DELETE FROM orders WHERE id=$1";
+  pool.query(Query,[order_id])
+  .then(result=>res.send("It has been deleted"))
+  .catch((e)=>console.log(e))
+});
+
+
+app.delete("/customers/:customerId",function (req,res){
+  if (!req.body) {
+    return res.status(400).send("Body not found");
+  }
+ 
+  let customer_id=req.params.customerId;
+
+ if(typeof customer_id =="undefined" )
+  {
+    res.send("id is missing");
+  }
+
+  pool
+    .query("SELECT * FROM orders WHERE customer_id =$1", [customer_id])
+    .then((result) => {
+      if (result.rows.length) {
+        res.send("This customer has orders, we can not delete")
+      }});
+  const Query="DELETE FROM customers WHERE id=$1";
+    pool.query(Query,[customer_id])
+    .then(result=>res.send("Id has been deleted"))
+    .catch((e)=>console.log(e))
+});
+
+
+
+
+
+app.get("/customers/:customerId/orders",function (req,res){
+ 
+  let customer_id=req.params.customerId;
+
+ if(typeof (customer_id)=="undefined" )
+  {
+    res.send("id is missing");
+  }
+  const Query="select order_reference,order_date,unit_price,supplier_name,quantity from orders inner join order_items on order_items.order_id=orders.id inner join products on products.id= order_items.product_id inner join suppliers on suppliers.id=products.supplier_id where customer_id=$1";
+  pool.query(Query,[customer_id])
+  .then(result=>res.send(result.rows))
+  .catch((e)=>console.log(e))
+});
+
+
+// DELETE FROM table_name WHERE condition;
+
+
 
 app.listen(3001,function(){
   console.log("Listening at port 3001");
@@ -166,3 +253,7 @@ app.listen(3001,function(){
 
 
 
+// select order_reference,order_date,unit_price,supplier_name,quantity from orders 
+// inner join order_items on order_items.order_id=orders.id
+// inner join products on products.id= order_items.product_id
+// inner join suppliers on suppliers.id=products.supplier_id where customer_id=1;
