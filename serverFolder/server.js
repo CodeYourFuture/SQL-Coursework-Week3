@@ -73,17 +73,19 @@ app.get("/products",function(req,res){
     .catch((e)=>console.log(e));
   }
   
+});
+
+
 app.post("/customers",function (req,res){
   let {name}=req.body;
   let {address}=req.body;
   let {city}=req.body;
   let {country}=req.body;
-  console.log("i am wokring customers")
   if(typeof (name)!="undefined" || typeof (address)!="undefined" || typeof (city)!="undefined" || typeof (country)!="undefined" )
   {
     const Query="INSERT INTO customers(name,address,city,country) VALUES($1,$2,$3,$4)";
       pool.query(Query,[name,address,city,country])
-      .then(result=>res.send(result))
+      .then(result=>res.send("It has been added")) // confirm this to check if it has een added or not.
       .catch((e)=>console.log(e));
   }
   
@@ -92,20 +94,67 @@ app.post("/customers",function (req,res){
   }
 });
 
-// product name, a price and a supplier id
 
 
-
-
-
-
-
+app.post("/products", function (req, res) {
+  if (!req.body) {
+    return res.status(400).send("Body not found");
+  }
+  const newProductName = req.body.product_name;
+  const newProductPrice = req.body.unit_price;
+  const newProductSupplierId = req.body.supplier_id;
+  if (!Number.isInteger(newProductPrice) || newProductPrice <= 0) {
+    console.log(newProductPrice);
+    return res
+      .status(400)
+      .send("The price of products should be a positive integer.");     
+  }
+  pool
+    .query("SELECT * FROM suppliers WHERE id =$1", [newProductSupplierId])
+    .then((result) => {
+      if (!result.rows.length) {
+        return res
+          .status(400)
+          .send(`Supplier with the ${newProductSupplierId} does not exists!`);
+      }});
+        const query =
+          "INSERT INTO products (product_name, unit_price, supplier_id) VALUES ($1, $2, $3)";
+        pool
+          .query(query, [newProductName, newProductPrice, newProductSupplierId])
+          .then(() => res.send("product has been created!"))
+          .catch((e) => console.error(e));
 });
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// {
+//   "product_name":"Balls",
+//   "unit_price":3,
+//   "supplier_id":1
+// }
 
 app.listen(3001,function(){
   console.log("Listening at port 3001");
 });
+
+// if(result>0) //result will have count of that id, if it 0 it means that id does not exist so we can not insert then we should abort
+//         let query2="insert into products(product_name,unit_price,supplier_id)values($1,$2,$2)"
+//         pool.query(query2,[product_name,unit_price,supplier_id])
+//         .then(ans=>res.send(ans))
+//         .catch((e)=>console.log(e));
+
 
