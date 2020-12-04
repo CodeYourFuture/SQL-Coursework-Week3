@@ -1,0 +1,28 @@
+{
+  "name": "sql-coursework-week3",
+  "version": "1.0.0",
+  "description": "You can continue working on the code from last week for this weeks task.",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ade0211/SQL-Coursework-Week3.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Ade0211/SQL-Coursework-Week3/issues"
+  },
+  "homepage": "https://github.com/Ade0211/SQL-Coursework-Week3#readme",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "modules": "^0.4.0",
+    "nodemon": "^2.0.6",
+    "pg": "^8.5.1"
+  }
+}
