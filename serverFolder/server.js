@@ -129,32 +129,40 @@ app.post("/products", function (req, res) {
 
 
 
+app.post("/customers/:customerId/orders", function (req, res) {
+  if (!req.body) {
+    return res.status(400).send("Body not found");
+  }
 
+  let {order_date} =req.body;
+  let {order_reference}=req.body; 
+  let customer_id=req.params.customerId;
 
+ if(typeof (order_date)=="undefined" || typeof (order_reference)=="undefined" || typeof (customer_id)=="undefined" )
+  {
+    res.send("One of the fields is missing");
+  }
 
+  pool
+    .query("SELECT * FROM customers WHERE id =$1", [customer_id])
+    .then((result) => {
+      if (!result.rows.length) {
+        return res
+          .status(400)
+          .send(`Customer with the ${customer_id} does not exists!`);
+      }});
+  const query =
+    "INSERT INTO orders (order_date, order_reference, customer_id) VALUES ($1, $2, $3)";
+  pool
+    .query(query, [order_date, order_reference, customer_id])
+    .then(() => res.send("Order has been created!"))
+    .catch((e) => console.error(e));
+});
 
-
-
-
-
-
-
-
-
-// {
-//   "product_name":"Balls",
-//   "unit_price":3,
-//   "supplier_id":1
-// }
 
 app.listen(3001,function(){
   console.log("Listening at port 3001");
 });
 
-// if(result>0) //result will have count of that id, if it 0 it means that id does not exist so we can not insert then we should abort
-//         let query2="insert into products(product_name,unit_price,supplier_id)values($1,$2,$2)"
-//         pool.query(query2,[product_name,unit_price,supplier_id])
-//         .then(ans=>res.send(ans))
-//         .catch((e)=>console.log(e));
 
 
