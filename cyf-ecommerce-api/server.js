@@ -90,6 +90,111 @@ pool.query(`SELECT * FROM suppliers WHERE id='${supplier_id}'`)
     .catch((e) => console.error(e));
 });
 
+//Add a new POST endpoint `/customers/:customerId/orders` to create a new order
+// (including an order date, and an order reference) for a customer.
+
+app.post("/customers/:customerId/orders", function (req, res) {
+ const customerId = req.params.customerId;
+  const order_date = req.body.order_date;
+  const order_reference = req.body.order_reference;
+ 
+  const queryCustomer = "SELECT id from customers WHERE id = $1";
+  
+  pool
+    .query(queryCustomer, [customerId])
+    .then((result) => {
+        if(!result.rows.length > 0){
+       return res.status(400).send('Customer does not exist');
+        }
+       
+    })
+
+    .catch((e) => console.error(e));
+
+  const query =
+    "INSERT INTO orders (order_date, order_reference,customer_id) VALUES ($1, $2, $3)";
+
+  pool
+    .query(query, [order_date, order_reference, customerId])
+    .then(() => res.send("Order created!"))
+    .catch((e) => console.error(e));
+});
+
+//a new PUT endpoint `/customers/:customerId` to update an existing customer (name, address, city and country).
+
+app.put("/customers/:customerId", function (req, res) {
+  const customerId = req.params.customerId;
+  const name = req.body.name;
+  const address = req.body.address;
+  const city = req.body.city;
+  const country = req.body.country;
+
+  pool
+    .query("UPDATE customers SET name=$1,address=$2,city=$3,country=$4 WHERE id=$5", [name,address,city,country, customerId])
+    .then(() => res.send(`Customer with the id:${customerId} was updated!`))
+    .catch((e) => console.error(e));
+});
+
+
+//a new DELETE endpoint `/orders/:orderId` to delete an existing order along all the associated order items.
+app.delete("/orders/:orderId", function (req, res) {
+  const orderId = req.params.orderId;
+
+  pool
+    .query("DELETE FROM order_items WHERE order_id=$1", [orderId])
+    .then(() => {
+      pool
+        .query("DELETE FROM orders WHERE id=$1", [orderId])
+        .then(() => res.send(`Order with the id: ${orderId} was deleted!`))
+        .catch((e) => console.error(e));
+    })
+    .catch((e) => console.error(e));
+});
+
+//a new DELETE endpoint `/customers/:customerId` to delete an existing customer 
+//only if this customer doesn't have orders.
+
+app.delete("/customers/:customerId", function (req, res) {
+  const customerId = req.params.customerId;
+
+ const queryCustomer = "SELECT customer_id from orders WHERE customer_id = $1";
+  
+  pool
+    .query(queryCustomer, [customerId])
+    .then((result) => {
+        if(result.rows.length > 0){
+       return res.status(400).send('The customer has orders');
+        }
+       
+    })
+
+    .catch((e) => console.error(e));
+
+
+  pool
+    .query("DELETE FROM orders WHERE customer_id=$1", [customerId])
+    .then(() => {
+      pool
+        .query("DELETE FROM customers WHERE id=$1", [customerId])
+        .then(() => res.send(`Customer ${customerId} deleted!`))
+        .catch((e) => console.error(e));
+    })
+    .catch((e) => console.error(e));
+});
+
+/* Add a new GET endpoint `/customers/:customerId/orders` to load all the orders along the items in 
+the orders of a specific customer. Especially, the following information should be returned: order 
+references, order dates, product names, unit prices, suppliers and quantities. */
+
+app.get("/customers/:customerId/orders", function (req, res) {
+  const customerId = req.params.customerId;
+
+  pool
+    .query("SELECT order_reference,order_date,product_name,unit_price,supplier_name,quantity FROM order_items INNER JOIN orders ON order_items.id=orders.customer_id INNER JOIN products ON order_items.id=products.supplier_id INNER JOIN customers ON order_items.id=customers.id INNER JOIN suppliers ON order_items.id=suppliers.id WHERE id=$1", [customerId])
+    .then((result) => res.json(result.rows))
+    .catch((e) => console.error(e));
+});
+
 
 
 app.listen(3000, function() {
