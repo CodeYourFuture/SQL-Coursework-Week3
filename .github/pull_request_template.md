@@ -12,11 +12,11 @@ London Class 7 - Chris Owen - HTML/CSS - Week 1
 
 # Your Details
 
-- Your Name:
-- Your City:
-- Your Slack Name:
+- Your Name: Hiba Mohammed
+- Your City: Birmingham
+- Your Slack Name: Hiba
 
 # Homework Details
 
-- Module:
-- Week:
+- Module: SQL
+- Week: 3
