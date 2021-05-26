@@ -9,8 +9,9 @@ app.listen(5000, function () {
 const customers = require("./customers/customersRouter");
 const suppliers = require("./suppliers/suppliersRouter");
 const products = require("./products/productsRouter");
+const availability = require("./product_availability/productAvailabilityRouter");
 
 app.use("/customers", customers);
 app.use("/suppliers", suppliers);
 app.use("/products", products);
-
+app.use("/availability", availability);
