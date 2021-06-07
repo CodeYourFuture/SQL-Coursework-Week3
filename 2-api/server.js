@@ -76,8 +76,30 @@ app.post("/customers", (req, res) => {
     })
     .catch((error) => res.status(500).send(error));
 });
-
+/*
+- Add a new POST endpoint `/customers/:customerId/orders` to create a new order (including an order date, and an order reference) for a customer. Check that the customerId corresponds to an existing customer or return an error. */
 // customers put end points
+const newOrder = `insert into orders (order_date,order_reference,customer_id) values ($1,$2,$3)`;
+
+app.post("/customers/:customerId/orders", (req, res) => {
+  const customerId = req.params.customerId;
+  const newOrderDate = req.body.order_date;
+  const newOrderReference = req.body.order_reference;
+  pool
+    .query(`select * from customers where id=$1`, [customerId])
+    .then((result) => {
+      if (result.rows.length === 0) {
+        res.status(400).send({ msg: "customer does not exist" });
+      } else {
+        pool
+          .query(newOrder, [newOrderDate, newOrderReference, customerId])
+          .then((result) => {
+            res.send({ msg: "created new order" });
+          });
+      }
+    })
+    .catch((error) => res.status(500).send(error));
+});
 app.delete("/customers/:customerId", (req, res) => {
   const id = req.params.customerId;
   const deleteCustomerQuery = `delete from customers where id=$1`;
