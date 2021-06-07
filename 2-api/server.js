@@ -1,3 +1,4 @@
+const e = require("express");
 const express = require("express");
 const { Pool } = require("pg");
 require("dotenv").config();
@@ -48,14 +49,29 @@ app.get("/suppliers", (req, res) =>
 );
 
 // products end point
+let productQuery = `select product_name,supplier_name,unit_price from products 
+inner join product_availability on products.id=product_availability.prod_id
+inner join suppliers on product_availability.supp_id=suppliers.id`;
 
-app.get("/products", (req, res) =>
-  pool
-    .query(allProducts)
-    .then((result) => {
-      res.send(result.rows);
-    })
-    .catch((error) => res.status(500).send(error))
-);
+app.get("/products", (req, res) => {
+  const productNameQuery = req.query.name;
+  if (productNameQuery) {
+    pool
+      .query(
+        productQuery + " " + `where product_name like '%${productNameQuery}%'`
+      )
+      .then((result) => {
+        res.send(result.rows);
+      })
+      .catch((error) => res.status(500).send(error));
+  } else {
+    pool
+      .query(allProducts)
+      .then((result) => {
+        res.send(result.rows);
+      })
+      .catch((error) => res.status(500).send(error));
+  }
+});
 
 app.listen(3000, () => console.log("Running on port 3000"));
