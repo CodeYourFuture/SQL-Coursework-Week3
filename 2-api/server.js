@@ -131,7 +131,7 @@ app.post("/availability", async (req, res) => {
   try {
     const { supplierId, unitPrice, productId } = req.body;
 
-    //basic validation without checking if input is a number
+    // basic validation without checking if input is a number
     if (!supplierId || !productId || !unitPrice || unitPrice < 0) {
       return res.status(400).json({
         status: "error",
