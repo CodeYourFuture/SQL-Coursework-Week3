@@ -3,6 +3,7 @@ const express = require("express");
 const { Pool } = require("pg");
 require("dotenv").config();
 const app = express();
+app.use(express.json());
 const password = process.env.PASSWORD;
 const host = process.env.HOST;
 const user = process.env.USER;
@@ -28,15 +29,68 @@ inner join suppliers on product_availability.supp_id=suppliers.id;
 
 // customers end point
 
-app.get("/customers", (req, res) =>
+app.get("/customers", (req, res) => {
   pool
     .query(allCustomers)
     .then((result) => {
       res.send(result.rows);
     })
-    .catch((error) => res.status(500).send(error))
-);
+    .catch((error) => res.status(500).send(error));
+});
 
+// get customers by id
+
+app.get("/customers/:customerId", (req, res) => {
+  const customerId = req.params.customerId;
+  pool
+    .query(
+      `select customers.name, customers.address,customers.city,customers.country from customers where id=$1`,
+      [customerId]
+    )
+    .then((result) => {
+      res.send(result.rows);
+    })
+    .catch((error) => res.status(500).send(error));
+});
+
+// customers post request end point
+app.post("/customers", (req, res) => {
+  const newCustomerName = req.body.name;
+  const newCustomerAddress = req.body.address;
+  const newCustomerCity = req.body.city;
+  const newCustomerCountry = req.body.country;
+  const createNewCustomer = `insert into customers (name,address,city,country) values($1,$2,$3,$4) `;
+  // needs some data validation
+  pool
+    .query(createNewCustomer, [
+      newCustomerName,
+      newCustomerAddress,
+      newCustomerCity,
+      newCustomerCountry,
+    ])
+    .then((result) => {
+      res.send({ msg: "created new customer" });
+    })
+    .catch((error) => res.status(500).send(error));
+});
+
+// customers put end points
+app.delete("/customers/:customerId", (req, res) => {
+  const id = req.params.customerId;
+  const deleteCustomerQuery = `delete from customers where id=$1`;
+  pool
+    .query(`select * from orders where customer_id=$1`, [id])
+    .then((result) => {
+      if (result.rows.length > 0) {
+        res.status(400).send({ msg: "customer can't be deleted" });
+      } else {
+        pool
+          .query(deleteCustomerQuery, [id])
+          .then((result) => res.status(204).send(result.rows))
+          .catch((error) => res.status(500).send(error));
+      }
+    });
+});
 // suppliers end point
 
 app.get("/suppliers", (req, res) =>
@@ -72,6 +126,16 @@ app.get("/products", (req, res) => {
       })
       .catch((error) => res.status(500).send(error));
   }
+});
+// products post request
+app.post("/products", (req, res) => {
+  const product = req.body.name;
+  const newProduct = `insert into products (product_name) values($1)`;
+
+  pool
+    .query(newProduct, [product])
+    .then((result) => res.send(result.rows))
+    .catch((error) => res.status(500).send(error));
 });
 
 app.listen(3000, () => console.log("Running on port 3000"));
