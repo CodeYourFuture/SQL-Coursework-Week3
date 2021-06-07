@@ -21,6 +21,9 @@ const pool = new Pool(dbConfig);
 // psql queries
 
 const allCustomers = `select name from customers`;
+let productQuery = `select product_name,supplier_name,unit_price from products 
+inner join product_availability on products.id=product_availability.prod_id
+inner join suppliers on product_availability.supp_id=suppliers.id`;
 const allSuppliers = `select supplier_name from suppliers`;
 const allProducts = `select product_name,supplier_name,unit_price from products 
 inner join product_availability on products.id=product_availability.prod_id
@@ -102,10 +105,23 @@ app.get("/suppliers", (req, res) =>
     .catch((error) => res.status(500).send(error))
 );
 
+// orders end point
+
+app.delete("/orders/:orderId", (req, res) => {
+  const orderId = req.params.orderId;
+  const deleteOrderItems = `delete from order_items where order_id=$1`;
+  const deleteOrder = `delete from orders where orders.id=$1`;
+  pool
+    .query(deleteOrderItems, [orderId])
+    .then(() => {
+      pool
+        .query(deleteOrder, [orderId])
+        .then(() => res.send({ msg: "order successfully deleted " }))
+        .catch((error) => res.status(500).send(error));
+    })
+    .catch((error) => res.status(500).send(error));
+});
 // products end point
-let productQuery = `select product_name,supplier_name,unit_price from products 
-inner join product_availability on products.id=product_availability.prod_id
-inner join suppliers on product_availability.supp_id=suppliers.id`;
 
 app.get("/products", (req, res) => {
   const productNameQuery = req.query.name;
