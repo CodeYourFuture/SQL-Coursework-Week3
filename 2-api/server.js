@@ -18,7 +18,7 @@ const dbConfig = {
 };
 const pool = new Pool(dbConfig);
 
-// psql queries
+// postgres queries
 
 const allCustomers = `select name from customers`;
 let productQuery = `select product_name,supplier_name,unit_price from products 
@@ -57,6 +57,7 @@ app.get("/customers/:customerId", (req, res) => {
 });
 
 // customers post request end point
+
 app.post("/customers", (req, res) => {
   const newCustomerName = req.body.name;
   const newCustomerAddress = req.body.address;
@@ -76,11 +77,35 @@ app.post("/customers", (req, res) => {
     })
     .catch((error) => res.status(500).send(error));
 });
-/*
-- Add a new POST endpoint `/customers/:customerId/orders` to create a new order (including an order date, and an order reference) for a customer. Check that the customerId corresponds to an existing customer or return an error. */
+
 // customers put end points
 const newOrder = `insert into orders (order_date,order_reference,customer_id) values ($1,$2,$3)`;
+app.get("/customers/:customerId/orders", async function (req, res) {
+  const customerId = req.params.customerId;
 
+  const allOrders = `SELECT order_reference, product_name, unit_price, supplier_name, quantity,order_date
+  				FROM orders 
+				INNER JOIN order_items ON orders.id = order_items.order_id
+				INNER JOIN products ON products.id = order_items.product_id
+				INNER JOIN product_availability ON product_availability.prod_id = order_items.product_id AND product_availability.supp_id = order_items.supplier_id
+				INNER JOIN suppliers ON suppliers.id = product_availability.supp_id
+				WHERE customer_id=$1`;
+
+  pool
+    .query(`select * from customers where id=$1`, [customerId])
+    .then((result) => {
+      if (result.rows.length === 0) {
+        res.send({ msg: "customer does not exist" });
+      } else {
+        pool
+          .query(allOrders, [customerId])
+          .then((result) => res.json(result.rows))
+          .catch((error) => res.status(500).send(error));
+      }
+    });
+});
+
+// post request for creating new order
 app.post("/customers/:customerId/orders", (req, res) => {
   const customerId = req.params.customerId;
   const newOrderDate = req.body.order_date;
