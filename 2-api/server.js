@@ -100,7 +100,8 @@ app.get("/customers/:customerId/orders", async (req, res) => {
       INNER JOIN products  ON products.id = order_items.product_id            
       INNER JOIN product_availability  ON product_availability.prod_id = order_items.product_id              
       INNER JOIN suppliers  ON suppliers.id = order_items.supplier_id  
-      WHERE customers.id = 1;`
+      WHERE customers.id = $1;`,
+      [customerId]
     );
     res.status(200).json({
       status: "success",
