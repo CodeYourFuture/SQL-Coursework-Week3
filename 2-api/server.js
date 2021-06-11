@@ -132,36 +132,48 @@ app.post("/customers/:customerId/orders", (req, res) => {
       }
     })
     .catch((error) => res.status(500).send(error));
-}); /* 
+});
 app.put("/customers/:customerId", (req, res) => {
   const customerId = req.params.customerId;
   const newCustomerName = req.body.name;
   const newCustomerAddress = req.body.address;
   const newCustomerCity = req.body.city;
   const newCustomerCountry = req.body.country;
-  pool
-    .query(
-      `select customers.name, customers.address,customers.city,customers.country from customers where id=$1`,
-      [customerId]
-    )
-    .then((result) => {
-      console.log(result.rows);
-      if (result.rows.length > 0) {
-        const newCustomer = {};
-        const { name, address, city, country } = newlyUpdatedDetails;
-        if (name) {
-          newCustomer["name"] = name;
+
+  if (
+    newCustomerName &&
+    newCustomerAddress &&
+    newCustomerCity &&
+    newCustomerCountry
+  ) {
+    pool
+      .query("select id from customers where id=$1", [customerId])
+      .then((result) => {
+        if (result.rowCount > 0) {
+          pool
+            .query(
+              "UPDATE customers SET name=$1, address=$2, city=$3, country=$4 WHERE id=$5;",
+              [
+                newCustomerName,
+                newCustomerAddress,
+                newCustomerCity,
+                newCustomerCountry,
+                customerId,
+              ]
+            )
+            .then(() =>
+              res.send(`Customer ${customerId} successfully updated!.`)
+            )
+            .catch((e) => console.error(e));
+        } else {
+          res.status(400).send({ msg: "customer does not exist" });
         }
-        if (address) {
-          newCustomer["address"] = address;
-        }
-        if (city) {
-          newCustomer["name"] = name;
-        }
-      }
-    })
-    .catch((error) => res.send(error));
-}); */
+      })
+      .catch((error) => res.send(error));
+  } else {
+    res.status(400).send("fill in all customer entries");
+  }
+});
 app.delete("/customers/:customerId", (req, res) => {
   const id = req.params.customerId;
   const deleteCustomerQuery = `delete from customers where id=$1`;
