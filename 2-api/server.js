@@ -121,6 +121,33 @@ app.post("/customers", function (req, res) {
     .catch((e) => console.error(e));
 });
 
+app.post("/customers/:customerId/orders", (req, res) => {
+  const customerId = parseInt(req.params.customerId);
+  const newOrderDate = req.body.order_date;
+  const newOrderRef = req.body.order_reference;
+
+  if (!newOrderRef.includes("ORD")) {
+    return res.status(400).send("Enter order reference in valid format ORDXXX");
+  }
+
+  pool
+    .query(`select * from customer where id=$1`, [customerId])
+    .then((result) => {
+      if (result.rowCount === 0) {
+        return res
+          .status(400)
+          .send("No, customer found, invalid is or customer doesn't exist");
+      } else {
+        pool
+          .query(
+            "insert into orders (order_date, order_reference, customer_id) values ($1, $2, $3)",
+            [newOrderDate, newOrderRef, customerId]
+          )
+          .then(() => res.send({Msg: "Order created successfully"}));
+      }
+    });
+});
+
 app.post("/products", (req, res) => {
   const newProductName = req.body.product_name;
 
