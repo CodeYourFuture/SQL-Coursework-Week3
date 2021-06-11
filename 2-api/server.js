@@ -43,6 +43,7 @@ app.get("/products", async (req, res) => {
   }
 });
 
+//Customers
 app.get("/customers", async (req, res) => {
   try {
     const result = await pool.query(customerSelectQuery);
@@ -69,6 +70,34 @@ app.get("/customers/:id", (req, res) => {
       })
       .catch((error) => res.status(500).send(error));
   }
+});
+
+app.post("/customers", function (req, res) {
+  const newCustomerName = req.body.name;
+  const newCustomerAddress = req.body.address;
+  const newCustomerCity = req.body.city;
+  const newCustomerCountry = req.body.country;
+
+  if (
+    !newCustomerName ||
+    !newCustomerAddress ||
+    !newCustomerCity ||
+    !newCustomerCountry
+  ) {
+    return res.status(400).send("All fields are required.");
+  }
+
+  const query =
+    "INSERT INTO hotels (name, address, city, country) VALUES ($1, $2, $3)";
+  pool
+    .query(query, [
+      newCustomerName,
+      newCustomerAddress,
+      newCustomerCity,
+      newCustomerCountry,
+    ])
+    .then(() => res.send("Customer created!"))
+    .catch((e) => console.error(e));
 });
 
 app.listen(3000, () => {
