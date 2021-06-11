@@ -240,17 +240,60 @@ app.post("/products", (req, res) => {
     })
     .catch((error) => res.status(500).send(error));
 });
-app.post("/availability", async (req, res) => {
+app.post("/availability", (req, res) => {
   const newProductId = req.body.prod_id;
-  const newSupplierId = req.params.supp_id;
-  const newUnitPrice = req.body.unit_price;
-  /* if (!newProductId || !newSupplierId || !newUnitPrice) {
-    res.send({ msg: "fill in all details" });
-  } */
-  await pool.query(
-    `INSERT INTO product_availability (prod_id, supp_id, unit_price) VALUES ($1, $2, $3);`,
-    [productId, supplierId, unitPrice]
-  );
+  const newSupplierId = req.body.supp_id;
+  const newUnitPrice = parseFloat(req.body.unit_price);
+  if (!newProductId || !newSupplierId || !newUnitPrice) {
+    if (newUnitPrice <= 0) {
+      res
+        .status(400)
+        .send({ msg: "unite price can not be zero or negative value" });
+    }
+    res.status(400).send({ msg: "fill in all fields" });
+  }
+  pool
+    .query("SELECT id FROM products WHERE id=$1", [newProductId])
+    .then((result) => {
+      if (result.rowCount > 0) {
+        pool
+          .query("SELECT id FROM suppliers WHERE id=$1", [newSupplierId])
+          .then((result) => {
+            if (result.rowCount > 0) {
+              pool
+                .query(
+                  "SELECT unit_price FROM product_availability WHERE prod_id=$1 AND supp_id=$2",
+                  [newProductId, newSupplierId]
+                )
+                .then((result) => {
+                  if (result.rowCount > 0) {
+                    res.status(404).send({
+                      msg: "product and supplier already exists ",
+                    });
+                  }
+                  pool
+                    .query(
+                      "INSERT INTO product_availability (prod_id, supp_id, unit_price) VALUES ($1, $2, $3);",
+                      [newProductId, newSupplierId, newUnitPrice]
+                    )
+                    .then(() =>
+                      res.send("Product Availability Created successfully")
+                    )
+                    .catch((error) => res.send(error));
+                })
+                .catch((error) => res.send(error));
+            } else {
+              res
+                .status(404)
+                .send({ msg: "please check supplier id is valid" });
+            }
+          })
+          .catch((error) => res.send(error));
+      } else {
+        res.status(404).send({ msg: "please check product id is valid" });
+      }
+    })
+    .catch((error) => res.send(error));
 });
 
 app.listen(3000, () => console.log("Running on port 3000"));
