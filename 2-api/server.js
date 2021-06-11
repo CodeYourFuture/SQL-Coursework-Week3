@@ -126,71 +126,89 @@ app.post("/products", (req, res) => {
 });
 
 app.post("/availability", (req, res) => {
-  const newProdId = parseInt(req.body.prodId);
-  const newSuppId = parseInt(req.body.suppId);
+  const newProductId = parseInt(req.body.prodId);
+  const newSupplierId = parseInt(req.body.suppId);
   const newUnitPrice = parseFloat(req.body.unitPrice);
 
-  // check if all the fields exist and are non-empty number values
+  if (!newProductId || !newSupplierId || !newUnitPrice) {
+    return res.status(400).send("All  fields required");
+  }
   if (
-    !Number.isInteger(newProdId) ||
-    !Number.isInteger(newSuppId) ||
-    isNaN(newUnitPrice)
+    !Number.isInteger(newProductId) ||
+    !Number.isInteger(newSupplierId) ||
+    !Number.isInteger(newUnitPrice)
   ) {
-    return res
-      .status(400)
-      .send("Product ID, Supplier ID and Unit Price must be number values.");
+    return res.status(400).send("All  fields should be postive numbers");
   }
 
-  // check if the prod_id is valid.
+  // checks one by one
   pool
-    .query("SELECT id FROM products WHERE id=$1", [newProdId])
+    .query("SELECT id FROM products WHERE id=$1", [newProductId])
     .then((result) => {
-      // if the prodId is valid, then check remaining conditions
       if (result.rowCount > 0) {
-        // check if supp_id is valid.
         pool
-          .query("SELECT id FROM suppliers WHERE id=$1", [newSuppId])
+          .query("SELECT id FROM suppliers WHERE id=$1", [newSupplierId])
           .then((result) => {
             if (result.rowCount > 0) {
-              // check if the product availability does not already exist in records
               pool
                 .query(
                   "SELECT unit_price FROM product_availability WHERE prod_id=$1 AND supp_id=$2;",
-                  [newProdId, newSuppId]
+                  [newProductId, newSupplierId]
                 )
                 .then((result) => {
                   if (result.rowCount > 0) {
-                    return res
-                      .status(400)
-                      .send(
-                        "The product from the same supplier already exists. If you want to update the existing record, use the update feature."
-                      );
+                    return res.status(400).send("Product Already Exists");
                   }
                   pool
                     .query(
                       "INSERT INTO product_availability (prod_id, supp_id, unit_price) VALUES ($1, $2, $3);",
-                      [newProdId, newSuppId, newUnitPrice]
+                      [newProductId, newSupplierId, newUnitPrice]
                     )
-                    .then(() => res.send("Product Availability Created!"))
+                    .then(() => res.send("Product-Availability Created!"))
                     .catch((e) => console.error(e));
                 })
                 .catch((e) => console.error(e));
             } else {
-              return res
-                .status(400)
-                .send(
-                  "The Supplier ID is not a valid value. Check and try again."
-                );
+              return res.status(400).send("Invalid Supplier ID");
             }
           })
           .catch((e) => console.error(e));
       } else {
-        return res
-          .status(400)
-          .send("The Product ID is not a valid value. Check and try again.");
+        return res.status(400).send("Invalid Product ID");
       }
     })
     .catch((e) => console.error(e));
+});
+
+app.delete("/orders/:orderId", (req, res) => {
+  const orderId = parseInt(req.params.orderId);
+
+  pool
+    .query("delete from order_items where order_id = $1;", [orderId])
+    .then(() => {
+      pool
+        .query("delete from orders where order_id;", [orderId])
+        .then(() => res.send(`Order ${orderId} deleted`))
+        .catch((err) => console.log(err));
+    })
+    .catch((err) => console.log(err));
+});
+
+app.delete("/customers/:customerId", (req, res) => {
+  const customerId = parseInt(req.params.customerId);
+
+  pool
+    .query("select from orders where customer_id = $1;", [customerId])
+    .then((result) => {
+      if (result.count > 0) {
+        return res.status(400).send("Customers has orders");
+      }
+      pool
+        .query("delete from customers where id = $1;", [customerId])
+        .then(() => res.send(`Customer ${customerId} deleted`))
+        .catch((err) => console.log(err));
+    })
+    .catch((err) => console.log(err));
 });
 
 app.listen(3000, () => {
