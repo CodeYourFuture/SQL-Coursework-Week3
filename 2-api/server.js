@@ -37,7 +37,7 @@ INNER JOIN product_availability ON product_availability.prod_id = order_items.pr
 INNER JOIN suppliers ON suppliers.id = product_availability.supp_id
 WHERE customer_id=$1`;
 
-// start of customers end points
+/******************************************************customer end points************************************************ */
 
 app.get("/customers", (req, res) => {
   pool
@@ -191,7 +191,7 @@ app.delete("/customers/:customerId", (req, res) => {
     });
 });
 
-// suppliers end point
+/******************************************************customer supplier points************************************************ */
 
 app.get("/suppliers", (req, res) =>
   pool
@@ -202,7 +202,7 @@ app.get("/suppliers", (req, res) =>
     .catch((error) => res.status(500).send(error))
 );
 
-// orders end point
+/******************************************************customer order points************************************************ */
 
 app.delete("/orders/:orderId", (req, res) => {
   const orderId = req.params.orderId;
@@ -219,7 +219,7 @@ app.delete("/orders/:orderId", (req, res) => {
     .catch((error) => res.status(500).send(error));
 });
 
-// products end point
+/******************************************************customer product points************************************************ */
 
 app.get("/products", (req, res) => {
   const productNameQuery = req.query.name;
@@ -252,6 +252,8 @@ app.post("/products", (req, res) => {
     })
     .catch((error) => res.status(500).send(error));
 });
+/******************************************************customer product_availability points************************************************ */
+
 app.post("/availability", (req, res) => {
   const newProductId = req.body.prod_id;
   const newSupplierId = req.body.supp_id;
