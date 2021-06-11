@@ -72,6 +72,27 @@ app.get("/customers/:id", (req, res) => {
   }
 });
 
+app.get("/customers/:customerId/orders", (req, res) => {
+  const customerId = parseInt(req.params.customerId);
+  const orderQuery = `SELECT o.id, o.order_reference, o.order_date, p.product_name, oi.quantity
+  FROM order_items As oi
+  INNER JOIN  orders As o ON  oi.order_id = o.id
+  INNER JOIN  customers As c ON  o.customer_id = c.id
+ INNER JOIN  products As p ON  oi.product_id = p.id
+ INNER JOIN  product_availability As pa ON  pa.prod_id = p.id
+    WHERE c.id = $1`;
+
+  pool
+    .query(orderQuery, [customerId])
+    .then((result) => {
+      if (result.rowCount > 0) {
+        return res.status(200).send(result.rows);
+      }
+      res.status(404).send("Incorrect Customer ID");
+    })
+    .catch((err) => console.log(err));
+});
+
 app.post("/customers", function (req, res) {
   const newCustomerName = req.body.name;
   const newCustomerAddress = req.body.address;
@@ -177,6 +198,31 @@ app.post("/availability", (req, res) => {
         return res.status(400).send("Invalid Product ID");
       }
     })
+    .catch((e) => console.error(e));
+});
+
+app.put("/customers/:customerId", function (req, res) {
+  const newCustomerId = req.body.customerId;
+  const newCustomerName = req.body.name;
+  const newCustomerAddress = req.body.address;
+  const newCustomerCity = req.body.city;
+  const newCustomerCountry = req.body.country;
+
+  if (
+    !newCustomerName ||
+    !newCustomerAddress ||
+    !newCustomerCity ||
+    !newCustomerCountry
+  ) {
+    return res.status(400).send("All fields are required.");
+  }
+
+  pool
+    .query(
+      "update customers set name=$1, address=$2, city=$3, country=$4 where id=$5;",
+      [newCustomerName, newCustomerAddress, newCustomerCity, newCustomer]
+    )
+    .then(() => res.send(`Customer ${customerId} updated.`))
     .catch((e) => console.error(e));
 });
 
