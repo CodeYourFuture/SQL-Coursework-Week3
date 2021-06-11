@@ -20,7 +20,7 @@ const pool = new Pool(dbConfig);
 
 // postgres queries
 
-const allCustomers = `select name from customers`;
+const allCustomers = `select name,address,city,country from customers`;
 let productQuery = `select product_name,supplier_name,unit_price from products 
 inner join product_availability on products.id=product_availability.prod_id
 inner join suppliers on product_availability.supp_id=suppliers.id`;
@@ -29,8 +29,15 @@ const allProducts = `select product_name,supplier_name,unit_price from products
 inner join product_availability on products.id=product_availability.prod_id
 inner join suppliers on product_availability.supp_id=suppliers.id;
 `;
+const allOrders = `SELECT order_reference, product_name, unit_price, supplier_name, quantity,order_date
+FROM orders 
+INNER JOIN order_items ON orders.id = order_items.order_id
+INNER JOIN products ON products.id = order_items.product_id
+INNER JOIN product_availability ON product_availability.prod_id = order_items.product_id AND product_availability.supp_id = order_items.supplier_id
+INNER JOIN suppliers ON suppliers.id = product_availability.supp_id
+WHERE customer_id=$1`;
 
-// customers end point
+// start of customers end points
 
 app.get("/customers", (req, res) => {
   pool
@@ -41,8 +48,6 @@ app.get("/customers", (req, res) => {
     .catch((error) => res.status(500).send(error));
 });
 
-// get customers by id
-
 app.get("/customers/:customerId", (req, res) => {
   const customerId = req.params.customerId;
   pool
@@ -51,12 +56,14 @@ app.get("/customers/:customerId", (req, res) => {
       [customerId]
     )
     .then((result) => {
-      res.send(result.rows);
+      if (result.rows.length > 0) {
+        res.send(result.rows);
+      } else {
+        res.send({ msg: `customer with ${customerId} does not exist` });
+      }
     })
     .catch((error) => res.status(500).send(error));
 });
-
-// customers post request end point
 
 app.post("/customers", (req, res) => {
   const newCustomerName = req.body.name;
@@ -73,23 +80,22 @@ app.post("/customers", (req, res) => {
       newCustomerCountry,
     ])
     .then((result) => {
-      res.send({ msg: "created new customer" });
+      if (
+        newCustomerAddress &&
+        newCustomerCity &&
+        newCustomerCountry &&
+        newCustomerName
+      ) {
+        res.send({ msg: "created new customer" });
+      } else {
+        res.send({ msg: "please fill in all details " });
+      }
     })
     .catch((error) => res.status(500).send(error));
 });
 
-// customers put end points
-const newOrder = `insert into orders (order_date,order_reference,customer_id) values ($1,$2,$3)`;
 app.get("/customers/:customerId/orders", async function (req, res) {
   const customerId = req.params.customerId;
-
-  const allOrders = `SELECT order_reference, product_name, unit_price, supplier_name, quantity,order_date
-  				FROM orders 
-				INNER JOIN order_items ON orders.id = order_items.order_id
-				INNER JOIN products ON products.id = order_items.product_id
-				INNER JOIN product_availability ON product_availability.prod_id = order_items.product_id AND product_availability.supp_id = order_items.supplier_id
-				INNER JOIN suppliers ON suppliers.id = product_availability.supp_id
-				WHERE customer_id=$1`;
 
   pool
     .query(`select * from customers where id=$1`, [customerId])
@@ -105,7 +111,6 @@ app.get("/customers/:customerId/orders", async function (req, res) {
     });
 });
 
-// post request for creating new order
 app.post("/customers/:customerId/orders", (req, res) => {
   const customerId = req.params.customerId;
   const newOrderDate = req.body.order_date;
@@ -117,14 +122,46 @@ app.post("/customers/:customerId/orders", (req, res) => {
         res.status(400).send({ msg: "customer does not exist" });
       } else {
         pool
-          .query(newOrder, [newOrderDate, newOrderReference, customerId])
+          .query(
+            "INSERT INTO orders (order_date, order_reference, customer_id) VALUES ($1, $2, $3)",
+            [newOrderDate, newOrderReference, customerId]
+          )
           .then((result) => {
             res.send({ msg: "created new order" });
           });
       }
     })
     .catch((error) => res.status(500).send(error));
-});
+}); /* 
+app.put("/customers/:customerId", (req, res) => {
+  const customerId = req.params.customerId;
+  const newCustomerName = req.body.name;
+  const newCustomerAddress = req.body.address;
+  const newCustomerCity = req.body.city;
+  const newCustomerCountry = req.body.country;
+  pool
+    .query(
+      `select customers.name, customers.address,customers.city,customers.country from customers where id=$1`,
+      [customerId]
+    )
+    .then((result) => {
+      console.log(result.rows);
+      if (result.rows.length > 0) {
+        const newCustomer = {};
+        const { name, address, city, country } = newlyUpdatedDetails;
+        if (name) {
+          newCustomer["name"] = name;
+        }
+        if (address) {
+          newCustomer["address"] = address;
+        }
+        if (city) {
+          newCustomer["name"] = name;
+        }
+      }
+    })
+    .catch((error) => res.send(error));
+}); */
 app.delete("/customers/:customerId", (req, res) => {
   const id = req.params.customerId;
   const deleteCustomerQuery = `delete from customers where id=$1`;
@@ -141,6 +178,7 @@ app.delete("/customers/:customerId", (req, res) => {
       }
     });
 });
+
 // suppliers end point
 
 app.get("/suppliers", (req, res) =>
@@ -168,6 +206,7 @@ app.delete("/orders/:orderId", (req, res) => {
     })
     .catch((error) => res.status(500).send(error));
 });
+
 // products end point
 
 app.get("/products", (req, res) => {
@@ -190,15 +229,28 @@ app.get("/products", (req, res) => {
       .catch((error) => res.status(500).send(error));
   }
 });
-// products post request
-app.post("/products", (req, res) => {
-  const product = req.body.name;
-  const newProduct = `insert into products (product_name) values($1)`;
 
+app.post("/products", (req, res) => {
+  const product = req.body.product_name;
+  const newProduct = `insert into products (product_name) values($1)`;
   pool
     .query(newProduct, [product])
-    .then((result) => res.send(result.rows))
+    .then(() => {
+      res.status(201).send({ msg: "successfully created new product" });
+    })
     .catch((error) => res.status(500).send(error));
+});
+app.post("/availability", async (req, res) => {
+  const newProductId = req.body.prod_id;
+  const newSupplierId = req.params.supp_id;
+  const newUnitPrice = req.body.unit_price;
+  /* if (!newProductId || !newSupplierId || !newUnitPrice) {
+    res.send({ msg: "fill in all details" });
+  } */
+  await pool.query(
+    `INSERT INTO product_availability (prod_id, supp_id, unit_price) VALUES ($1, $2, $3);`,
+    [productId, supplierId, unitPrice]
+  );
 });
 
 app.listen(3000, () => console.log("Running on port 3000"));
