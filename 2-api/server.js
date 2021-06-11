@@ -100,6 +100,99 @@ app.post("/customers", function (req, res) {
     .catch((e) => console.error(e));
 });
 
+app.post("/products", (req, res) => {
+  const newProductName = req.body.product_name;
+
+  if (!newProductName) {
+    return res.status(400).send("Product Name is required");
+  }
+
+  pool
+    .query("SELECT * FROM products WHERE product_name=$1", [newProductName])
+    .then((result) => {
+      if (result.rows.length > 0) {
+        return res.status(400).send("Product exists.");
+      } else {
+        const productPostQuery =
+          "INSERT INTO products (product_name) VALUES ($1);";
+
+        pool
+          .query(productPostQuery, [newProductName])
+          .then(() => res.send("Product Created!"))
+          .catch((e) => console.error(e));
+      }
+    })
+    .catch((e) => console.error(e));
+});
+
+app.post("/availability", (req, res) => {
+  const newProdId = parseInt(req.body.prodId);
+  const newSuppId = parseInt(req.body.suppId);
+  const newUnitPrice = parseFloat(req.body.unitPrice);
+
+  // check if all the fields exist and are non-empty number values
+  if (
+    !Number.isInteger(newProdId) ||
+    !Number.isInteger(newSuppId) ||
+    isNaN(newUnitPrice)
+  ) {
+    return res
+      .status(400)
+      .send("Product ID, Supplier ID and Unit Price must be number values.");
+  }
+
+  // check if the prod_id is valid.
+  pool
+    .query("SELECT id FROM products WHERE id=$1", [newProdId])
+    .then((result) => {
+      // if the prodId is valid, then check remaining conditions
+      if (result.rowCount > 0) {
+        // check if supp_id is valid.
+        pool
+          .query("SELECT id FROM suppliers WHERE id=$1", [newSuppId])
+          .then((result) => {
+            if (result.rowCount > 0) {
+              // check if the product availability does not already exist in records
+              pool
+                .query(
+                  "SELECT unit_price FROM product_availability WHERE prod_id=$1 AND supp_id=$2;",
+                  [newProdId, newSuppId]
+                )
+                .then((result) => {
+                  if (result.rowCount > 0) {
+                    return res
+                      .status(400)
+                      .send(
+                        "The product from the same supplier already exists. If you want to update the existing record, use the update feature."
+                      );
+                  }
+                  pool
+                    .query(
+                      "INSERT INTO product_availability (prod_id, supp_id, unit_price) VALUES ($1, $2, $3);",
+                      [newProdId, newSuppId, newUnitPrice]
+                    )
+                    .then(() => res.send("Product Availability Created!"))
+                    .catch((e) => console.error(e));
+                })
+                .catch((e) => console.error(e));
+            } else {
+              return res
+                .status(400)
+                .send(
+                  "The Supplier ID is not a valid value. Check and try again."
+                );
+            }
+          })
+          .catch((e) => console.error(e));
+      } else {
+        return res
+          .status(400)
+          .send("The Product ID is not a valid value. Check and try again.");
+      }
+    })
+    .catch((e) => console.error(e));
+});
+
 app.listen(3000, () => {
   console.log(" Server running on port 3000");
 });
