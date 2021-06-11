@@ -12,7 +12,6 @@ const pool = new Pool(dbConfig);
 
 const customerSelectQuery = `SELECT * FROM customers `;
 const customerSelectByIdQuery = `SELECT * FROM customers WHERE id = $1`;
-const suppliersSelectQuery = `SELECT * FROM suppliers `;
 const productsSelectQuery = `SELECT product_name,supplier_name,unit_price FROM products 
 INNER JOIN product_availability on products.id=product_availability.prod_id
 INNER JOIN suppliers on product_availability.supp_id=suppliers.id;
@@ -23,16 +22,6 @@ INNER JOIN suppliers on product_availability.supp_id=suppliers.id;
 function isValidID(id) {
   return !isNaN(id) && id >= 0;
 }
-
-// end point
-app.get("/suppliers", async (req, res) => {
-  try {
-    const result = await pool.query(suppliersSelectQuery);
-    res.send(result.rows);
-  } catch (error) {
-    res.status(500).send(error);
-  }
-});
 
 app.get("/products", async (req, res) => {
   try {
@@ -52,7 +41,7 @@ app.get("/customers", async (req, res) => {
     res.status(500).send(error);
   }
 });
-
+//  one customer
 app.get("/customers/:id", (req, res) => {
   const id = parseInt(req.params.id);
 
@@ -72,6 +61,7 @@ app.get("/customers/:id", (req, res) => {
   }
 });
 
+// selected customer orders
 app.get("/customers/:customerId/orders", (req, res) => {
   const customerId = parseInt(req.params.customerId);
   const orderQuery = `SELECT o.id, o.order_reference, o.order_date, p.product_name, oi.quantity
@@ -93,6 +83,7 @@ app.get("/customers/:customerId/orders", (req, res) => {
     .catch((err) => console.log(err));
 });
 
+// new customer
 app.post("/customers", function (req, res) {
   const newCustomerName = req.body.name;
   const newCustomerAddress = req.body.address;
@@ -120,7 +111,7 @@ app.post("/customers", function (req, res) {
     .then(() => res.send("Customer created!"))
     .catch((e) => console.error(e));
 });
-
+// new orders for a customer
 app.post("/customers/:customerId/orders", (req, res) => {
   const customerId = parseInt(req.params.customerId);
   const newOrderDate = req.body.order_date;
@@ -148,6 +139,7 @@ app.post("/customers/:customerId/orders", (req, res) => {
     });
 });
 
+// new products
 app.post("/products", (req, res) => {
   const newProductName = req.body.product_name;
 
@@ -228,6 +220,7 @@ app.post("/availability", (req, res) => {
     .catch((e) => console.error(e));
 });
 
+// updating a customer
 app.put("/customers/:customerId", function (req, res) {
   const newCustomerId = req.body.customerId;
   const newCustomerName = req.body.name;
@@ -247,12 +240,19 @@ app.put("/customers/:customerId", function (req, res) {
   pool
     .query(
       "update customers set name=$1, address=$2, city=$3, country=$4 where id=$5;",
-      [newCustomerName, newCustomerAddress, newCustomerCity, newCustomer]
+      [
+        newCustomerName,
+        newCustomerAddress,
+        newCustomerCity,
+        newCustomer,
+        newCustomerId,
+      ]
     )
     .then(() => res.send(`Customer ${customerId} updated.`))
     .catch((e) => console.error(e));
 });
 
+// deleting orders with Id
 app.delete("/orders/:orderId", (req, res) => {
   const orderId = parseInt(req.params.orderId);
 
@@ -267,6 +267,7 @@ app.delete("/orders/:orderId", (req, res) => {
     .catch((err) => console.log(err));
 });
 
+// deleting customer by id
 app.delete("/customers/:customerId", (req, res) => {
   const customerId = parseInt(req.params.customerId);
 

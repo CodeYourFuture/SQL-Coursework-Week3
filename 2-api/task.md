@@ -30,4 +30,6 @@ In the following homework, you will create new API endpoints in the NodeJS appli
 
 - Add a new DELETE endpoint `/customers/:customerId` to delete an existing customer only if this customer doesn't have orders.
 
----- Add a new GET endpoint `/customers/:customerId/orders` to load all the orders along with the items in the orders of a specific customer. Especially, the following information should be returned: order references, order dates, product names, unit prices, suppliers and quantities.
+Add a new GET endpoint `/customers/:customerId/orders` to load all the orders along with the items in the orders of a specific customer. Especially, the following information should be returned: order references, order dates, product names, unit prices, suppliers and quantities.
+
+`SELECT o.id, o.order_reference, o.order_date, product_name, oi.quantity
