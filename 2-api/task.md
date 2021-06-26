@@ -1,7 +1,6 @@
 # Homework
 
 ## Submission
-
 You can continue working on the code from last week for this weeks task.
 
 To submit you should open a pull request with all of your code in this folder.
