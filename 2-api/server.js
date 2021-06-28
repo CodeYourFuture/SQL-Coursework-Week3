@@ -49,8 +49,9 @@ app.get("/suppliers", function (req, res) {
 });
 
 app.get("/products", function (req, res) {
-  let queryStr = `select product_name,unit_price,supplier_name from products inner join product_availability 
-  on products.id=product_availability.prod_id inner join suppliers on suppliers.id=product_availability.supp_id `;
+  let queryStr = `select product_name,unit_price,supplier_name from products
+   inner join product_availability on products.id=product_availability.prod_id
+   inner join suppliers on suppliers.id=product_availability.supp_id `;
   sqlQuery = req.query.name
     ? queryStr.concat(` where product_name='${req.query.name}'`)
     : queryStr;
@@ -103,7 +104,6 @@ app.post("/availability", (req, res) => {
   if (!supplierId || !productId || !unitPrice || unitPrice < 0) {
     return res.status(400).send("Data is not correct");
   }
-
   pool
     .query("SELECT * FROM products WHERE id=$1", [productId])
     .then((result) => {
@@ -144,6 +144,26 @@ app.post("/availability", (req, res) => {
     });
 });
 
+app.post("/customers/:customerId/orders",(req,res)=>{
+  const customerId=req.params.customerId;
+  const {order_date, order_reference}=req.body;
+  const selectQuery=`select * from customers where id=$1 `;
+  const insertQuery = `insert into orders (order_date, order_reference, customer_id) values ($1,$2,$3)`;
+  pool
+  .query(selectQuery,[customerId])
+  .then((result)=>{
+    if(result.rows.length==0){
+     return res.status(400).send("The customer is not exists!");
+    }
+    else{
+      pool
+      .query(insertQuery,[order_date, order_reference, customerId])
+      .then(()=> res.send("Order created"))
+      .catch((e)=>console.log(e));
+    }
+  })
+});
+
 app.put("/customers/:customerId", function (req, res) {
   const customerId = req.params.customerId;
   const {name, address, city, country} = req.body;
@@ -160,3 +180,40 @@ app.put("/customers/:customerId", function (req, res) {
 
 
 
+app.delete("/orders/:orderId", (req, res) => {
+  const orderId = req.params.orderId;
+  const query1 = "delete from order_items where order_id=$1";
+  const query2 = "delete from orders where id=$1";
+  console.log(query1, query2);
+  pool
+    .query(query1, [orderId])
+    .then(() => {
+      pool
+        .query(query2, [orderId])
+        .then(() => res.send(`The order is deleted!`))
+        .catch((e) => console.error(e));
+    })
+    .catch((e) => console.error(e));
+});
+
+app.delete("/customers/:customerId", (req, res) => {
+  const customerId = req.params.customerId;
+  const query1 = "select * from orders where customer_id=$1";
+  const query2 = "delete from customers where id=$1";
+  console.log(query1, query2);
+  pool
+    .query(query1, [customerId])
+    .then((result) => {
+      if(result.rows.length==0){
+      pool
+        .query(query2, [customerId])
+        .then(() => res.send(`The order is deleted!`))
+        .catch((e) => console.error(e));
+      }
+      else{
+        res.send(`The customer has ordered items`);
+      }
+
+    })
+    .catch((e) => console.error(e));
+});
