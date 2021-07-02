@@ -16,21 +16,21 @@ Please complete the details below this message
 
 # Your Details
 
-- Your Name:
-- Your City:
-- Your Slack Name:
+- Your Name: Laura M
+- Your City: London
+- Your Slack Name: Laura M
 
 # Homework Details
 
-- Module:
-- Week:
+- Module: SQL
+- Week: 3
 
 # Notes
 
-- What did you find easy?
+- What did you find easy? Running the SQL commands on the terminal
 
-- What did you find hard?
+- What did you find hard? Carrying out queries and subqueries
 
-- What do you still not understand?
+- What do you still not understand? Subqueries, when to use request.params or request.query
 
-- Any other notes?
+- Any other notes? n/a
