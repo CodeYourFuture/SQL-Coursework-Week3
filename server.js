@@ -136,7 +136,8 @@ app.get("/products", function (req, res) {
 app.post("/availability", function (req, res) {
     const newSupplierId = req.body.supp_id;
     const newUnitPrice = req.body.unit_price;
-
+    const newProductId =req.body.prod_id
+ 
     newUnitPrice > 0 && 
 
 
