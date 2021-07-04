@@ -151,3 +151,61 @@ app.put("/customers/:customerId", function (req, res) {
     });
 });
 
+// Add a new DELETE endpoint /orders/:orderId to delete an existing order along with all the associated order items.
+
+app.delete("/orders/:orderId", function (req, res) {
+  const orderId = req.params.orderId;
+  pool
+    .query("SELECT * FROM order_items WHERE order_id=$1", [orderId])
+    .then((result) => {
+      if (result.rows.length > 0) {
+        pool
+          .query("DELETE FROM order_items WHERE order_id=$1", [orderId])
+          .then(() =>
+            pool
+              .query("DELETE FROM orders WHERE id=$1", [orderId])
+              .then(() => res.send(`Order ${orderId} deleted!`))
+              .catch((e) => res.send(JSON.stringify(e)))
+          );
+      } else {
+        res.send("check order id");
+      }
+    });
+});
+
+// Add a new DELETE endpoint /customers/:customerId to delete an existing customer only if this customer doesn't have orders.
+
+app.delete("/customers/:customerId", function (req, res) {
+  const customerId = req.params.customerId;
+  pool
+    .query("SELECT * FROM orders WHERE customer_id=$1", [customerId])
+    .then((result) => {
+      if (result.rows.length > 0) {
+        res.send("can't delete customer, customer has orders");
+      } else {
+        pool.query(
+          "DELETE FROM customers WHERE id=$1",
+          [customerId],
+          (error, result) => {
+            res.json({ message: "customer deleted" });
+          }
+        );
+      }
+    });
+});
+
+// Add a new GET endpoint /customers/:customerId/orders to load all the orders along with the items in the orders of a specific customer. Especially, the following information should be returned: order references, order dates, product names, unit prices, suppliers and quantities.
+
+app.get("/customers/:customerId/orders", function (req, res) {
+  const customerId = req.params.customerId;
+  const query =
+    "SELECT name,order_reference,order_date,unit_price,supplier_name, product_name,quantity FROM customers INNER JOIN orders ON customers.id=orders.customer_id INNER JOIN order_items ON orders.id=order_items.order_id INNER JOIN product_availability ON order_items.product_id=product_availability.prod_id AND order_items.supplier_id=product_availability.supp_id INNER JOIN suppliers  ON suppliers.id=product_availability.supp_id INNER JOIN products ON products.id=product_availability.prod_id WHERE customers.id=$1";
+
+  pool.query(query, [customerId], (error, result) => {
+    if (result.rows.length === 0) {
+      res.send("please check customer id");
+    } else {
+      res.json(result.rows);
+    }
+  });
+});
