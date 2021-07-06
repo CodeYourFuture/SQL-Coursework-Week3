@@ -143,4 +143,43 @@ app.post('/customers/:customerID/orders', (req, res) => {
 	});
 })
 
+app.put('/customers/:customerID', (req, res) => {
+	const { customerID } = req.params;
+	const { name, address, city, country } = req.body;
+	const checkCustomerID = `SELECT * FROM customers WHERE id=$1`;
+	const valuesToUpdateObj = {};
+
+	if (name) {
+		valuesToUpdateObj.name = name;
+	}
+	if (address) {
+		valuesToUpdateObj.address = address;
+	}
+	if (city) {
+		valuesToUpdateObj.city = city;
+	}
+	if (country) {
+		valuesToUpdateObj.country = country;
+	}
+
+	const queryArray = [];
+	const valuesArray = [];
+	for (const key in valuesToUpdateObj) {
+		valuesArray.push(valuesToUpdateObj[key]);
+
+		queryArray.push(`${key}=$${valuesArray.length}`)
+	}
+
+	const updateCustomer = `UPDATE customers SET ${queryArray.join(', ')} WHERE id=$${valuesArray.length + 1}`;
+
+	pool.query(checkCustomerID, [customerID], (dbError, dbResult) => {
+		if (dbResult.rows.length === 0) {
+			res.status(400).send('There is no customer with that id');
+		} else {
+			pool.query(updateCustomer, [...valuesArray, customerID], () => res.status(200).send(`Customer with the id: ${customerID} has been updated`));
+		}
+	})
+})
+
+
 app.listen(PORT, () => console.log(`Server running on ${PORT}`))
