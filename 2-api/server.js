@@ -1,3 +1,7 @@
+
+//I have done this exercise with help of Somayeh Karimi as I was not able to do it by myself :)
+
+
 const express = require("express");
 const app = express();
 const { Pool } = require("pg");
@@ -14,7 +18,6 @@ const pool = new Pool({
 
 app.get("/customers", (req, res) => {
   pool.query("SElECT * FROM customers", (error, result) => {
-    console.log(result.rows);
     res.json(result.rows);
   });
 });
@@ -108,7 +111,7 @@ app.post("/availability", (req, res) => {
                     pool
                       .query(query, [productId, supplierId, unitPrice])
                       .then(() => res.send("Product Created!"))
-                      .catch((e) => console.error(e));
+                      .catch((error) => console.error(error));
                   }
                 });
             } else {
@@ -117,6 +120,26 @@ app.post("/availability", (req, res) => {
           });
       } else {
         return res.status(400).send("The supplier does not exists!");
+      }
+    });
+});
+
+app.post("/customers/:customerId/Orders", (req, res) => {
+  const customerId = req.params.customerId;
+  const { order_date, order_reference } = req.body;
+  pool
+    .query("Select * FROM customers Where id=$1", [customerId])
+    .then((result) => {
+      if (result.rows.length === 0) {
+        return res.status(400).send("Please enter a valid customer ID");
+      } else {
+        pool
+          .query(
+            "INSERT into orders(order_date, order_reference, customer_id) values ($1, $2, $3)",
+            [order_date, order_reference, customerId]
+          )
+          .then(() => res.send("Order created"))
+          .catch((error) => console.log(error));
       }
     });
 });
@@ -131,7 +154,38 @@ app.put("/customers/:customerId", (req, res) => {
       [name, address, city, country, customerId]
     )
     .then(() => res.send(`Customer ${customerId} updated!`))
-    .catch((e) => console.error(e));
+    .catch((error) => console.error(error));
+});
+
+app.delete("/orders/:orderId", (req, res) => {
+  const { orderId } = req.params;
+  pool
+    .query("DELETE FROM order_items Where Order_id=$1", [orderId])
+    .then(() => {
+      pool
+        .query("DELETE FROM orders WHERE id=$1", [orderId])
+        .then(() =>
+          res.send("Order deleted").then((error) => console.error(error))
+        );
+    })
+    .then((error) => console.error(error));
+});
+
+app.delete("/customers/:customerId", (req, res) => {
+  const { customerId } = req.params;
+  pool
+    .query("SELECT * FROM orders WHERE customer_id=$1", [customerId])
+    .then((result) => {
+      if (result.rows.length === 0) {
+        pool
+          .query("DELETE FROM customers WHERE id=$1", [customerId])
+          .then(() => res.send("Customer deleted"))
+          .catch((error) => console.log(error));
+      } else {
+        res.send("Customer has orders and can not be deleted");
+      }
+    })
+    .catch((error) => console.log(error));
 });
 
 app.listen(3000, function () {
