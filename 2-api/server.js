@@ -25,6 +25,10 @@ app.get('/customers', (req, res) => {
 	pool.query('SELECT * FROM customers', (dbError, dbResult) => res.json(dbResult.rows));
 })
 
+app.get('/orders', (req, res) => {
+	pool.query('SELECT * FROM orders;', (dbError, dbResult) => res.status(200).json(dbResult.rows));
+})
+
 app.get('/suppliers', (req, res) => {
 	pool.query('SELECT * FROM suppliers', (dbError, dbResult) => res.json(dbResult.rows));
 })
@@ -177,6 +181,46 @@ app.put('/customers/:customerID', (req, res) => {
 			res.status(400).send('There is no customer with that id');
 		} else {
 			pool.query(updateCustomer, [...valuesArray, customerID], () => res.status(200).send(`Customer with the id: ${customerID} has been updated`));
+		}
+	})
+})
+
+app.delete('/orders/:orderID', (req, res) => {
+	const { orderID } = req.params;
+	const deleteFromOrders = `DELETE FROM orders WHERE id=$1`;
+	const deleteFromOrderItems = `DELETE FROM order_items WHERE order_id=$1`;
+	const checkOrder = `SELECT * FROM orders WHERE id=$1`;
+
+	if (orderID) {
+		pool.query(checkOrder, [orderID], (dbError, dbResult) => {
+			if (dbResult.rows.length === 0) {
+				res.status(400).send('There is no order with this id')
+			} else {
+				pool.query(deleteFromOrders, [orderID]);
+				pool.query(deleteFromOrderItems, [orderID]);
+				res.status(200).send('deleted')
+			}
+		})
+	}
+})
+
+app.delete('/customers/:customerID', (req, res) => {
+	const { customerID } = req.params;
+	const checkCustomerOrder = `SELECT * FROM orders WHERE customer_id=$1`;
+	const checkCustomerID = `SELECT * FROM customers WHERE id=$1`;
+	const deleteCustomer = `DELETE FROM customers WHERE id=$1`;
+
+	pool.query(checkCustomerOrder, [customerID], (dbError, dbResult) => {
+		if (dbResult.rows.length === 0) {
+			pool.query(checkCustomerID, [customerID], (dbError, dbResult) => {
+				if (dbResult.rows.length > 0) {
+					pool.query(deleteCustomer, [customerID], () => res.status(200).send('Customer deleted'));
+				} else {
+					res.status(400).send('The is no customer with this id');
+				}
+			})
+		} else {
+			res.status(400).send('This customer has orders and cannot be deleted')
 		}
 	})
 })
