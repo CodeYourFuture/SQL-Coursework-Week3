@@ -223,7 +223,30 @@ app.delete('/customers/:customerID', (req, res) => {
 			res.status(400).send('This customer has orders and cannot be deleted')
 		}
 	})
-})
+});
 
+app.get('/customers/:customerID/orders', (req, res) => {
+	const { customerID } = req.params;
+	const checkCustomerID = `SELECT * FROM customers WHERE id=$1`;
+	const getOrderFromCustomer = `SELECT order_date, order_reference, supplier_name, product_name, unit_price
+        FROM customers INNER JOIN orders ON customers.id=orders.customer_id 
+				INNER JOIN order_items ON orders.id=order_items.order_id 
+				INNER JOIN suppliers ON order_items.supplier_id=suppliers.id 
+				INNER JOIN products ON order_items.product_id=products.id 
+				INNER JOIN product_availability ON products.id=product_availability.prod_id WHERE customers.id=$1;`;
+	pool.query(checkCustomerID, [customerID], (dbError, dbResult) => {
+		if (dbResult.rows.length === 0) {
+			res.status(400).send('There is no customer with that ID');
+		} else {
+			pool.query(getOrderFromCustomer, [customerID], (dbError, dbResult) => {
+				if (dbResult.rows.length === 0) {
+					res.status(200).send('This customers has no orders');
+				} else {
+					res.json(dbResult.rows);
+				}
+			})
+		}
+	})
+})
 
 app.listen(PORT, () => console.log(`Server running on ${PORT}`))
