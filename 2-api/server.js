@@ -203,24 +203,99 @@ app.put("/customers/:customerId", (req, res) => {
     pool
         .query(query, [customerId])
         .then((result) => {
-            const newName = req.body.name;
-            const newAddress = req.body.address;
-            const newCity = req.body.city;
-            const newCountry = req.body.country;
+            if (result.rowCount === 0) {
+                res.status(400).send("Customer does not exist");
+            } else {
+                const newName = req.body.name;
+                const newAddress = req.body.address;
+                const newCity = req.body.city;
+                const newCountry = req.body.country;
 
-            let currentName = result.rows[0].name;
-            let currentAddress = result.rows[0].address;
-            let currentCity = result.rows[0].city;
-            let currentCountry = result.rows[0].country;
+                let currentName = result.rows[0].name;
+                let currentAddress = result.rows[0].address;
+                let currentCity = result.rows[0].city;
+                let currentCountry = result.rows[0].country;
 
-            const query =
-                "UPDATE customers SET name=$1, address=$2, city=$3, country=$4 WHERE id=$5";
-            pool
-                .query(query, [newName || currentName, newAddress || currentAddress, newCity || currentCity, newCountry || currentCountry, customerId])
-                .then(() => res.send("Customer details updated!"))
-                .catch((e) => console.log(e));
+                const query =
+                    "UPDATE customers SET name=$1, address=$2, city=$3, country=$4 WHERE id=$5";
+                pool
+                    .query(query, [newName || currentName, newAddress || currentAddress, newCity || currentCity, newCountry || currentCountry, customerId])
+                    .then(() => res.send("Customer details updated!"))
+                    .catch((e) => console.error(e));
+            }
         })
-        .catch((e) => console.log(e));
+        .catch((e) => console.error(e));
+})
+
+
+app.delete("/orders/:orderId", (req, res) => {
+    const orderId = req.params.orderId;
+
+    const query = "SELECT * FROM orders WHERE id=$1";
+    pool
+        .query(query, [orderId])
+        .then((result) => {
+            if (result.rowCount === 0) {
+                res.status(400).send("Order does not exist");
+            } else {
+                const query =
+                    "DELETE FROM order_items WHERE order_items.order_id=$1";
+                pool
+                    .query(query, [orderId])
+                    .then(() => {
+                        const query =
+                            "DELETE FROM orders WHERE orders.id=$1";
+                        pool
+                            .query(query, [orderId])
+                            .then(() => res.send("Order is deleted"))
+                            .catch((e) => console.error(e))
+                    })
+                    .catch((e) => console.error(e));
+            }
+        })
+        .catch((e) => console.error(e));
+})
+
+app.delete("/customers/:customerId", (req, res) => {
+    const customerId = req.params.customerId;
+
+    const query = "SELECT * FROM orders WHERE customer_id=$1";
+    pool
+        .query(query, [customerId])
+        .then((result) => {
+            if (result.rowCount) {
+                res.status(400).send("Customer have orders");
+            } else {
+                const query =
+                    "DELETE FROM customers WHERE id=$1";
+                pool
+                    .query(query, [customerId])
+                    .then(() => res.send("Customer is deleted"))
+                    .catch((e) => console.error(e));
+            }
+        })
+        .catch((e) => console.error(e));
+})
+
+
+app.get("/customers/:customerId/orders", (req, res) => {
+    const customerId = req.params.customerId;
+
+    pool
+        .query("SELECT * FROM customers WHERE id=$1", [customerId])
+        .then((result) => {
+            if (result.rowCount === 0) {
+                res.status(400).send(`No customer with id ${customerId}`);
+            } else {
+                const query =
+                    `SELECT orders.order_reference, orders.order_date, products.product_name, product_availability.unit_price, suppliers.supplier_name, order_items.quantity FROM orders INNER JOIN order_items ON order_items.order_id = orders.id INNER JOIN product_availability ON product_availability.prod_id = order_items.product_id AND product_availability.supp_id = order_items.supplier_id INNER JOIN suppliers ON suppliers.id = product_availability.supp_id INNER JOIN products ON products.id = product_availability.prod_id WHERE orders.customer_id = $1;`;
+                pool
+                    .query(query, [customerId])
+                    .then((result) => res.json(result.rows))
+                    .catch((e) => console.error(e))
+            }
+        })
+        .catch((e) => console.error(e));
 })
 
 
