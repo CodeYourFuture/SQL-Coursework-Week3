@@ -55,6 +55,17 @@ app.get("/products", (req, res) => {
     });
 });
 
+// Add a new GET endpoint /customers/:customerId to load a single customer by ID.
+app.get("/customers/:customerId", (req, res) => {
+    const { customerId } = req.params;
+    pool.query(`SELECT * FROM customers WHERE id=${customerId}`, (db_err, db_res) => {
+        if (db_err) {
+            res.send(JSON.stringify(db_err));
+        } else {
+            res.json(db_res.rows);
+        }
+    });
+});
 
 
 
