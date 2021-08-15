@@ -1,0 +1,14 @@
+{
+    "sqltools.connections": [
+        {
+            "previewLimit": 100,
+            "server": "localhost",
+            "port": 5432,
+            "askForPassword": true,
+            "driver": "PostgreSQL",
+            "name": "cyf_hotel",
+            "username": "postgres",
+            "database": "cyf_hotel"
+        }
+    ]
+}
