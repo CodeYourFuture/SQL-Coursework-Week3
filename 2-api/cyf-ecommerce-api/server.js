@@ -39,6 +39,22 @@ app.get("/suppliers", (req, res) => {
 });
 
 
+// Add a GET endpoint `/products` to return all the product names along with their prices and supplier names with search functionality.
+app.get("/products", (req, res) => {
+    const { name } = req.query;
+    let query = "SELECT p.product_name, sup.supplier_name, p_a.unit_price FROM products as p INNER JOIN product_availability as p_a ON p.id = p_a.prod_id INNER JOIN suppliers as sup ON sup.id = p_a.supp_id";
+
+    query = name ? query.concat(` WHERE p.product_name='${name}'`) : query;
+
+    pool.query(query, (db_err, db_res) => {
+        if (db_err) {
+            res.send(JSON.stringify(db_err));
+        } else {
+            res.json(db_res.rows);
+        }
+    });
+});
+
 
 
 
