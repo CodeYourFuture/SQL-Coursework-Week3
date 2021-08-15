@@ -9,6 +9,16 @@
             "name": "cyf_hotel",
             "username": "postgres",
             "database": "cyf_hotel"
+        },
+        {
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 5432,
+            "askForPassword": true,
+            "driver": "PostgreSQL",
+            "name": "cyf_ecommerce",
+            "database": "cyf_ecommerce",
+            "username": "postgres"
         }
     ]
 }
