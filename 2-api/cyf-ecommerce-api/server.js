@@ -2,7 +2,7 @@ const express = require("express");
 const app = express();
 const cors = require("cors");
 const { Pool } = require("pg");
-const pool = require("./cyf_ecommerce.sql");
+const pool = require("./db_ecommerce");
 
 // Middleware
 app.use(cors());
@@ -66,6 +66,36 @@ app.get("/customers/:customerId", (req, res) => {
         }
     });
 });
+
+// Add a new POST endpoint /customers to create a new customer with name, address, city and country.
+app.post("/customers", (req, res) => {
+    const newCustomerName = req.body.name;
+    const newCustomerAddress = req.body.address;
+    const newCustomerCity = req.body.city;
+    const newCustomerCountry = req.body.country;
+
+    pool
+        .query("SELECT * FROM customers WHERE name=$1", [newCustomerName])
+        .then((result) => {
+            if (result.rows.length > 0) {
+                return res.status(400).send("A customer name with the same name already exists!");
+            } else {
+                const query = "INSERT INTO customers (name, address, city, country) VALUES($1, $2, $3, $4)";
+                pool
+                    .query(query, [newCustomerName, newCustomerAddress, newCustomerCity, newCustomerCountry])
+                    .then(() => res.send("Customer created"))
+                    .catch((error) => console.log(error));
+            }
+        });
+});
+
+
+
+
+
+
+
+
 
 
 
