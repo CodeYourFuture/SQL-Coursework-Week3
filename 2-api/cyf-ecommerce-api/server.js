@@ -90,6 +90,24 @@ app.post("/customers", (req, res) => {
 });
 
 
+// Add a new POST endpoint /products to create a new product.
+app.post("/products", (req, res) => {
+    const newProductName = req.body.product_name;
+
+    pool
+        .query("SELECT * FROM products WHERE product_name=$1", [newProductName])
+        .then((result) => {
+            if (result.rows.length > 1) {
+                return res.status(400).send("A product name with the same name already exists!");
+            } else {
+                const query = "INSERT INTO products (product_name) VALUES ($1)";
+                pool
+                    .query(query, [newProductName])
+                    .then(() => res.send("New product created"))
+                    .catch((error) => console.log(error));
+            }
+        });
+});
 
 
 
