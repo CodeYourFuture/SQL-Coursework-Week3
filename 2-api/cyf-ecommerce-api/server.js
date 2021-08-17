@@ -150,6 +150,27 @@ app.post("/availability", (req, res) => {
 });
 
 
+// Add a new POST endpoint /customers/:customerId/orders to create a new order (including an order date, and an order reference) for a customer. Check that the customerId corresponds to an existing customer or return an error.
+app.post("/customers/:customerId/orders", (req, res) => {
+    const customerId = req.params.customerId;
+    const orderDate = req.body.order_date;
+    const orderReference = req.body.order_reference;
+
+    pool
+        .query("SELECT * FROM customers WHERE id=$1", [customerId])
+        .then((result) => {
+            if (result.rows.length > 0) {
+                const query = "INSERT INTO orders (order_date, order_reference, customer_id) VALUES ($1, $2, $3)";
+                pool
+                    .query(query, [orderDate, orderReference, customerId])
+                    .then(() => res.send("New order created"))
+                    .catch((error) => console.log(error));
+            } else {
+                return res.status(400).send("Customer Id doesn't exist");
+            }
+        })
+        .catch((error) => console.log(error));
+});
 
 
 
@@ -167,5 +188,5 @@ app.post("/availability", (req, res) => {
 
 
 app.listen(3000, () => {
-    console.log("Server has started on port 3000");
+    console.log("Server I running on port 3000");
 });
