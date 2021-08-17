@@ -110,6 +110,44 @@ app.post("/products", (req, res) => {
 });
 
 
+// Add a new POST endpoint /availability to create a new product availability (with a price and a supplier id). Check that the price is a positive integer and that both the product and supplier ID's exist in the database, otherwise return an error.
+app.post("/availability", (req, res) => {
+    const newProductId = req.body.prod_id;
+    const newProductPrice = req.body.unit_price;
+    const newSupplierId = req.body.supp_id;
+
+    if (!Number.isInteger(newProductPrice) || newProductPrice <= 0) {
+        return res.status(400).send("Unit price should be positive integer");
+    }
+
+    if (!newProductId || !newSupplierId) {
+        return res.status(400).send("Product Id or Supplier Id missing");
+    }
+
+    pool
+        .query("SELECT * FROM product_availability WHERE prod_id = $1", [newProductId])
+        .then((result) => {
+            if (result.rows.length === 0) {
+                return res.status(400).json("The product does not exist!");
+            } else if (result.rows.length > 0) {
+                pool
+                    .query("SELECT * FROM product_availability WHERE supp_id = $1", [newSupplierId])
+                    .then((result) => {
+                        if (result.rows.length === 0) {
+                            return res.status(400).send("The supplier ID does not exist!");
+                        } else {
+                            const query = "INSERT INTO product_availability (prod_id, supp_id, unit_price) VALUES ($1, $2, $3)";
+                            pool
+                                .query(query, [newProductId, newSupplierId, newProductPrice])
+                                .then(() => res.send("New availability created"))
+                                .catch((e) => console.error(e));
+                        }
+                    })
+                    .catch((error) => console.log(error));
+            }
+        })
+        .catch((error) => console.log(error));
+});
 
 
 
