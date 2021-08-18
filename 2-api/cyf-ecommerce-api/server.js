@@ -200,7 +200,19 @@ app.put("/customers/:customerId", (req, res) => {
     });
 });
         
-    
+   //Add a new DELETE endpoint /orders/:orderId to delete an existing order along with all the associated order items.
+app.delete("/orders/:orderId", (req, res) => {
+    const orderId = req.params.orderId;
+    pool
+        .query("DELETE FROM order_items WHERE order_id = $1", [orderId])
+        .then(() => {
+            pool
+                .query("DELETE FROM orders WHERE id = $1", [orderId])
+                .then(() => res.send(`Order id=${orderId} along with all the associated order items deleted.`))
+                .catch((error) => console.log(error));
+        })
+        .catch((error) => console.log(error));
+}); 
 
 
 
