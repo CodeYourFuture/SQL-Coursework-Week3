@@ -174,6 +174,33 @@ app.post("/customers/:customerId/orders", (req, res) => {
 
 
 
+//Add a new PUT endpoint /customers/:customerId to update an existing customer (name, address, city and country).
+app.put("/customers/:customerId", (req, res) => {
+    const customerId = req.params.customerId;
+    const newCustomerName = req.body.name;
+    const newCustomerAddress = req.body.address;
+    const newCustomerCity = req.body.city;
+    const newCustomerCountry = req.body.country;
+
+
+    pool
+    .query("SELECT * FROM customers WHERE id=$1", [customerId])
+    .then((result) => {
+        if (result.rows.length > 0) {
+            const query = "UPDATE customers SET name=$1, address=$2, city=$3, country=$4 WHERE id=$5";
+            pool
+                .query(query, [newCustomerName, newCustomerAddress, newCustomerCity, newCustomerCountry, customerId])
+                .then(() => {
+                    res.send(`Customer ${customerId} updated!`);
+                })
+                .catch((error) => console.log(error));
+        } else {
+            return res.status(400).send("Customer Id doesn't exist");
+        }
+    });
+});
+        
+    
 
 
 
