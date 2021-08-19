@@ -215,13 +215,25 @@ app.delete("/orders/:orderId", (req, res) => {
 }); 
 
 
+//Add a new GET endpoint /customers/:customerId/orders to load all the orders along with the items in the orders of a specific customer. Especially, the following information should be returned: order references, order dates, product names, unit prices, suppliers and quantities.
+app.get("/customers/:customerId/orders", (req, res) => {
+    const { customerId } = req.params;
+    const query = `SELECT c.id, o.order_reference, o.order_date, p.product_name, p_a.unit_price, sup.supplier_name, o_i.quantity FROM order_items as o_i
+    INNER JOIN orders as o ON o.id = o_i.order_id
+    INNER JOIN products as p ON p.id = o_i.product_id
+    INNER JOIN product_availability as p_a ON p_a.supp_id = o_i.supplier_id
+    INNER JOIN suppliers as sup ON sup.id = o_i.supplier_id
+    INNER JOIN customers as c ON c.id = o.customer_id
+    WHERE c.id = $1
+    ORDER BY o.order_reference ASC`;
 
-
-
-
-
-
-
+    pool.query(query, [customerId], (db_err, db_res) => {
+        if (db_err) {
+            return res.send(JSON.stringify(db_err));
+        }
+        return res.json(db_res.rows);
+    });
+});
 
 
 
