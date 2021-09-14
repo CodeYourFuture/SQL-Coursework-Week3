@@ -13,7 +13,7 @@ app.use(express.json());
 app.get("/customers", (req, res) => {
 
     pool.query("SELECT * FROM customers", (db_err, db_res) => {
-        if(db_err){
+        if (db_err){
             res.send(JSON.stringify(db_err));
         } else{
             console.log(db_res);
@@ -89,7 +89,6 @@ app.post("/customers", (req, res) => {
         });
 });
 
-
 // Add a new POST endpoint /products to create a new product.
 app.post("/products", (req, res) => {
     const newProductName = req.body.product_name;
@@ -108,7 +107,6 @@ app.post("/products", (req, res) => {
             }
         });
 });
-
 
 // Add a new POST endpoint /availability to create a new product availability (with a price and a supplier id). Check that the price is a positive integer and that both the product and supplier ID's exist in the database, otherwise return an error.
 app.post("/availability", (req, res) => {
@@ -146,8 +144,8 @@ app.post("/availability", (req, res) => {
                     .catch((error) => console.log(error));
             }
         })
-        .catch((error) => console.log(error));
-});
+    .catch((error) => console.log(error))
+})
 
 
 // Add a new POST endpoint /customers/:customerId/orders to create a new order (including an order date, and an order reference) for a customer. Check that the customerId corresponds to an existing customer or return an error.
