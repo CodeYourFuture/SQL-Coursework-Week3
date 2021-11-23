@@ -12,8 +12,6 @@ const pool = new Pool({
 
 //////////////////////////  GET POINTS //////////////////////////////////////
 
-console.log("forreview");
-
 // Add a new GET endpoint `/customers/` to load all the customers.
 app.get("/customers", (req, res) => {
   pool.query("SELECT *FROM customers", (result) => {
