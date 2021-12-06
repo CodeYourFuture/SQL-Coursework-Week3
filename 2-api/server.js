@@ -1,7 +1,10 @@
+const { request } = require("express");
 const express = require("express");
 const app = express();
 const PORT = process.env.PORT || 5000;
-
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+// https://stackoverflow.com/questions/23259168/what-are-express-json-and-express-urlencoded
 const { Pool } = require("pg");
 const pool = new Pool({
   user: "postgres",
@@ -16,12 +19,26 @@ app.get("/customers", function (req, res) {
     res.json(result.rows);
   });
 });
+app.get("/customers/:customerId", function (req, res) {
+  const customerId = req.params.customerId;
+  pool.query(
+    "SELECT * FROM customers WHERE id = $1",
+    [customerId],
+    (error, result) => {
+      if (error) {
+        return response.send(error);
+      }
+      res.json(result.rows);
+    }
+  );
+});
 
 app.get("/suppliers", (request, response) => {
   pool.query("SELECT * FROM suppliers", (error, result) => {
     response.send(result.rows);
   });
 });
+
 // /products?name=Cup
 app.get("/products", (request, response) => {
   const productName = request.query.name;
