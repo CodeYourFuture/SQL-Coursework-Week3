@@ -125,6 +125,43 @@ app.post("/availability", function (req, res) {
   );
 });
 
+//to create a new order
+app.post("/customers/:customerId/orders", (req, res) => {
+  const customerId = req.params.customerId;
+  const order_date = req.body.order_date;
+  const order_reference = req.body.order_reference;
+
+  if (!customerId || !order_date || !order_reference) {
+    return res
+      .status(400)
+      .send(
+        "Please enter customerId, order_date & order_reference"
+      );
+  }
+  pool.query(
+    "SELECT * FROM customers c WHERE c.id =$1",
+    [customerId],
+    (error, result) => {
+      if (error) {
+        return res.send(error);
+      }
+      if (result.rowCount === 0) {
+        return res.send({ msg: "customer doesn't exist" });
+      }
+
+      pool.query(
+        "INSERT INTO orders(order_date, order_reference, customer_id) VALUES($1,$2,$3) RETURNING id;",
+        [order_date, order_reference, customerId],
+        (error, result) => {
+          if (error) {
+            return res.send(error);
+          }
+          res.send({ id: result.rows[0].id });
+        }
+      );
+    }
+  );
+});
 app.listen(PORT, () => {
   console.log(`Port running on ${PORT}`);
 });
