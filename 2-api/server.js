@@ -22,13 +22,21 @@ app.get("/suppliers", (request, response) => {
     response.send(result.rows);
   });
 });
-
+// /products?name=Cup
 app.get("/products", (request, response) => {
+  const productName = request.query.name;
+
   const selectQuery = `SELECT product_name,unit_price, supplier_name
                       FROM products
                       INNER JOIN product_availability ON product_availability.prod_id = products.id
-                      INNER JOIN suppliers ON product_availability.supp_id  = suppliers.id; `;
+                      INNER JOIN suppliers ON product_availability.supp_id  = suppliers.id
+                      WHERE product_name ILIKE '%${
+                        productName || ""
+                      }%' ; `;
   pool.query(selectQuery, (error, result) => {
+    if (error) {
+      return response.send(error);
+    }
     response.send(result.rows);
   });
 });
