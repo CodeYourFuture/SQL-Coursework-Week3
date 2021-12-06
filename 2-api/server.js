@@ -46,7 +46,7 @@ app.post("/customers", function (req, res) {
     [name, address, city, country],
     (error, result) => {
       if (error) {
-        return response.send(error);
+        return res.send(error);
       }
       res.send({ id: result.rows[0].id });
     }
@@ -77,6 +77,22 @@ app.get("/products", (request, response) => {
   });
 });
 
+//Add new product
+app.post("/products", function (req, res) {
+  const product_name = req.body.product_name;
+  const insertQuery =
+    "INSERT INTO products(product_name) VALUES($1)";
+  pool.query(
+    insertQuery,
+    [product_name],
+    (error, result) => {
+      if (error) {
+        return res.send(error);
+      }
+      res.send({ msg: "product added" });
+    }
+  );
+});
 app.listen(PORT, () => {
   console.log(`Port running on ${PORT}`);
 });
