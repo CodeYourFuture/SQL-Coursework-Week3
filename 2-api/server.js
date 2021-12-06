@@ -33,6 +33,25 @@ app.get("/customers/:customerId", function (req, res) {
   );
 });
 
+//Add new customer
+app.post("/customers", function (req, res) {
+  const name = req.body.name;
+  const address = req.body.address;
+  const city = req.body.city;
+  const country = req.body.country;
+  const insertQuery =
+    "INSERT INTO customers(name,address,city,country) VALUES($1,$2,$3,$4) RETURNING id;";
+  pool.query(
+    insertQuery,
+    [name, address, city, country],
+    (error, result) => {
+      if (error) {
+        return response.send(error);
+      }
+      res.send({ id: result.rows[0].id });
+    }
+  );
+});
 app.get("/suppliers", (request, response) => {
   pool.query("SELECT * FROM suppliers", (error, result) => {
     response.send(result.rows);
