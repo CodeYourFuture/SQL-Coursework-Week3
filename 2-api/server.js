@@ -93,6 +93,38 @@ app.post("/products", function (req, res) {
     }
   );
 });
+
+//  create a new product availability (
+app.post("/availability", function (req, res) {
+  const prod_id = req.body.prod_id;
+  const supp_id = req.body.supp_id;
+  const unit_price = +req.body.unit_price;
+
+  if (!prod_id || !supp_id || !unit_price) {
+    return res
+      .status(400)
+      .send("Please enter prod_id, supp_id & unit_price");
+  }
+  if (unit_price < 0) {
+    return res
+      .status(400)
+      .send("Price should be positive!");
+  }
+  const insertQuery =
+    "INSERT INTO product_availability(prod_id,supp_id,unit_price) VALUES($1,$2,$3)";
+  pool.query(
+    insertQuery,
+    [prod_id, supp_id, unit_price],
+    (error, result) => {
+      if (error) {
+        console.log(error);
+        return res.send(error.detail);
+      }
+      res.send({ msg: "product_availability added" });
+    }
+  );
+});
+
 app.listen(PORT, () => {
   console.log(`Port running on ${PORT}`);
 });
