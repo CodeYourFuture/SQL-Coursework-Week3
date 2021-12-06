@@ -162,6 +162,31 @@ app.post("/customers/:customerId/orders", (req, res) => {
     }
   );
 });
+
+// update an existing customer
+app.put("/customers/:customerId", (req, res) => {
+  const customerId = req.params.customerId;
+  const name = req.body.name;
+  const address = req.body.address;
+  const city = req.body.city;
+  const country = req.body.country;
+  const putQuery =
+    "UPDATE customers SET name = $2, address = $3,city = $4,country = $5 WHERE id=$1";
+  pool.query(
+    putQuery,
+    [customerId, name, address, city, country],
+    (error, result) => {
+      if (error) {
+        console.log(error);
+        return res.send(error);
+      }
+      if (result.rowCount === 0) {
+        return res.send({ msg: "customer doesn't exist" });
+      }
+      res.send(`Customer ${customerId} updated!`);
+    }
+  );
+});
 app.listen(PORT, () => {
   console.log(`Port running on ${PORT}`);
 });
