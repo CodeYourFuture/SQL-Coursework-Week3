@@ -22,12 +22,23 @@ app.get("/suppliers", function (req, res) {
   });
 });
 
+
 app.get("/products", function (req, res) {
-  pool.query("SELECT products.product_name, product_availability.unit_price, suppliers.supplier_name FROM products INNER JOIN product_availability ON product_availability.prod_id = products.id INNER JOIN suppliers ON product_availability.supp_id = suppliers.id"
-, (error, result) => {
-    res.json(result.rows);
-  });
+  let nameQuery = req.query.name;
+  dBQuery =
+    "SELECT products.product_name, product_availability.unit_price, suppliers.supplier_name FROM products INNER JOIN product_availability ON product_availability.prod_id = products.id INNER JOIN suppliers ON product_availability.supp_id = suppliers.id";
+
+  //if name query used, returns only results matching the name value
+if (nameQuery) {
+  dBQuery += ` WHERE product_name LIKE '%${nameQuery}%' ORDER BY product_name`;
+}
+
+  pool
+    .query(dBQuery)
+    .then((result) => res.json(result.rows))
+    .catch((e) => console.error(e));
 });
+
 
 app.listen(3000, function () {
   console.log("Server is listening on port 3000. Ready to accept requests!");
