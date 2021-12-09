@@ -244,7 +244,7 @@ app.post("/availability", (req, res) => {
   }
   pool
     .query(
-      "SELECT products.id, suppliers.id FROM products, suppliers WHERE p.id=$1 AND s.id=$2",
+      "SELECT products.id, suppliers.id FROM products, suppliers WHERE prod_id=$1 AND supp_id=$2",
       [productId, supplierId]
     )
     .then((result) => {
