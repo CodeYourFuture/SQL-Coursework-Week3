@@ -78,6 +78,27 @@ app.post("/availability", function (req, res) {
     });
 });
 
+app.post("/customers/:customerId/orders", function (req, res) {
+  const customerId = req.params.customerId;
+  const orderDate = req.body.order_date;
+  const orderRef = req.body.order_reference;
+
+  pool
+    .query("SELECT * FROM customers WHERE id=$1", [customerId])
+    .then((result) => {
+      if (result.rowCount === 0) {
+        return res.status(400).send("No customer with this id");
+      } else {
+        const query =
+          "INSERT INTO orders (order_date, order_reference, customer_id)VALUES ($1, $2, $3)";
+        pool
+          .query(query, [orderDate, orderRef, customerId])
+          .then(() => res.send("Order received"))
+          .catch((e) => console.error(e.detail));
+      }
+    });
+});
+
 
 app.listen(PORT, function () {
   console.log(`Server is listening on port ${PORT}. Ready to accept requests!`);
