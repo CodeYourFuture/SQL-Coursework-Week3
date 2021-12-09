@@ -123,6 +123,19 @@ app.put("/customers/:customerId", function (req, res) {
     });
 });
 
+app.delete("/orders/:orderId", function (req, res) {
+  const orderId = req.params.orderId;
+
+  pool
+    .query("DELETE FROM orders WHERE customer_id=$1", [orderId])
+    .then(() => {
+      pool
+        .query("DELETE FROM customers WHERE id=$1", [orderId])
+        .then(() => res.send(`customer ${customerId} deleted`))
+        .catch((e) => console.error(e));
+    })
+    .catch((e) => console.error(e.detail));
+});
 
 app.listen(PORT, function () {
   console.log(`Server is listening on port ${PORT}. Ready to accept requests!`);
