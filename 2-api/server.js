@@ -49,7 +49,34 @@ app.get("/products", (req, res) => {
       })
 });
 
+app.post("/availability", function (req, res) {
+  const productId = req.body.prod_id;
+  const supplierId = req.body.supp_id;
+  const unitPrice = req.body.unit_price;
 
+  if (unitPrice <= 0) {
+    return res.status(400).send("Invalid price");
+  }
+
+  pool
+    .query(
+      "SELECT p.id, s.id FROM  products p, suppliers s  WHERE p.id=$1 AND s.id=$2",
+      [productId, supplierId]
+    )
+    .then((result) => {
+      if (result.rowCount === 0) {
+        return res.status(400).send("Check product id or supplier id");
+      } else {
+        const query =
+          "INSERT INTO product_availability (prod_id, supp_id, unit_price) VALUES ($1, $2, $3)";
+
+        pool
+          .query(query, [productId, supplierId, unitPrice])
+          .then(() => res.send("Successfully added new product availability"))
+          .catch((e) => console.error(e.detail));
+      }
+    });
+});
 
 
 app.listen(PORT, function () {
