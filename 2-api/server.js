@@ -99,6 +99,30 @@ app.post("/customers/:customerId/orders", function (req, res) {
     });
 });
 
+app.put("/customers/:customerId", function (req, res) {
+  const customerId = req.params.customerId;
+  const newName = req.body.name;
+  const newAdd = req.body.address;
+  const newCity = req.body.city;
+  const newCountry = req.body.country;
+
+  pool
+    .query("SELECT * FROM customers WHERE id=$1", [customerId])
+    .then((result) => {
+      if (result.rowCount === 0) {
+        return res.status(400).send("No customer with this id");
+      } else {
+        const query =
+          "UPDATE customers SET name=$1, address=$2, city=$3, country=$4 WHERE id=$5";
+
+        pool
+          .query(query, [newName, newAdd, newCity, newCountry, customerId])
+          .then(() => res.send(`Successfully updated customer ${customerId}`))
+          .catch((e) => console.error(e.detail));
+      }
+    });
+});
+
 
 app.listen(PORT, function () {
   console.log(`Server is listening on port ${PORT}. Ready to accept requests!`);
