@@ -137,6 +137,36 @@ app.delete("/orders/:orderId", function (req, res) {
     .catch((e) => console.error(e.detail));
 });
 
+app.delete("/customers/:customerId", function (req, res) {
+  const customerId = req.params.customerId;
+
+  pool
+    .query("SELECT * FROM orders WHERE customer_id=$1", [customerId])
+    .then((result) => {
+      if (result.rowCount.length !== 0) {
+        res.status(400).send(`Delete not allowed for customer ${customerId}`);
+      } else {
+        pool
+          .query("DELETE FROM customers WHERE id=$1", [customerId])
+          .then(() => res.send(`customer ${customerId} deleted`))
+          .catch((e) => console.error(e.detail));
+      }
+    })
+    .catch((e) => console.error(e.detail));
+});
+
+app.get("/customers/:customerId/orders", function (req, res) {
+  const customerId = req.params.customerId;
+
+  pool
+    .query("SELECT o.order_reference, o.order_date, p.product_name, pa.unit_price, s.supplier_name, oi.quantity  FROM orders o INNER JOIN order_items oi ON o.id = oi.order_id INNER JOIN products p ON oi.product_id = p.id INNER JOIN product_availability pa ON oi.product_id = pa.prod_id INNER JOIN suppliers s ON oi.supplier_id = s.id WHERE customer_id=$1",
+     [customerId])
+    .then((result) => {
+      res.send(result.rows)
+  })
+    .catch((e) => console.error(e.detail));
+});
+
 app.listen(PORT, function () {
   console.log(`Server is listening on port ${PORT}. Ready to accept requests!`);
 });
