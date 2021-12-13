@@ -187,6 +187,42 @@ app.put("/customers/:customerId", (req, res) => {
     }
   );
 });
+// DELETE endpoint /orders/:orderId to delete an existing order
+app.delete("/orders/:orderId", (req, res) => {
+  const orderId = req.params.orderId;
+
+  //delete order_items first
+  const deleteQueryForOrderItems =
+    "DELETE FROM order_items WHERE order_id = $1";
+  pool.query(
+    deleteQueryForOrderItems,
+    [orderId],
+    (error, result) => {
+      if (error) {
+        console.log(error);
+        return res.send(error);
+      }
+    }
+  );
+  //delete order
+  const deleteQueryForOrders =
+    "DELETE FROM orders WHERE id = $1";
+  pool.query(
+    deleteQueryForOrders,
+    [orderId],
+    (error, result) => {
+      if (error) {
+        console.log(error);
+        return res.send(error);
+      }
+      if (result.rowCount === 0) {
+        return res.send({ msg: "order doesn't exist" });
+      }
+      res.send(`Order ${orderId} deleted!`);
+    }
+  );
+});
+
 app.listen(PORT, () => {
   console.log(`Port running on ${PORT}`);
 });
