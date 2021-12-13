@@ -223,6 +223,31 @@ app.delete("/orders/:orderId", (req, res) => {
   );
 });
 
+//DELETE customer
+app.delete("/customers/:customerId", (req, res) => {
+  const customerId = req.params.customerId;
+
+  //check orders first
+  const selectQueryForOrders =
+    "SELECT FROM orders WHERE customer_id = $1";
+  const deleteQueryForCustomer =
+    "DELETE FROM customers WHERE id = $1";
+  pool.query(
+    deleteQueryForCustomer,
+    [customerId],
+    (error, result) => {
+      if (error) {
+        // console.log(error);
+        return res.send(error.detail);
+      }
+      if (result.rowCount === 0) {
+        return res.send({ msg: "customer doesn't exist" });
+      }
+      res.send(`Customer ${customerId} deleted!`);
+    }
+  );
+});
+
 app.listen(PORT, () => {
   console.log(`Port running on ${PORT}`);
 });
