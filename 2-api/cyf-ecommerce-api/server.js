@@ -26,11 +26,13 @@ app.get("/customers/:customerId", function (req, res) {
     .catch((e) => console.error(e));
 });
 
+
 app.get("/suppliers", function (req, res) {
   pool.query("SELECT supplier_name FROM suppliers", (error, result) => {
     res.json(result.rows);
   });
 });
+
 
 app.get("/products", function (req, res) {
   let nameQuery = req.query.name;
@@ -44,6 +46,22 @@ app.get("/products", function (req, res) {
 
   pool
     .query(dBQuery)
+    .then((result) => res.json(result.rows))
+    .catch((e) => console.error(e));
+});
+
+// Return 
+// SELECT orders.order_references, orders.order_date, products.product_name, product_availability.unit_price, suppliers.supplier_name and order_items.quantity
+// FROM orders INNER JOIN order_items ON orders.id = order_items.order_id INNER JOIN order_items ON order_items.supplier_id = product_availability.supp_id INNER JOIN products ON product_availability.prod_id = products.id INNER JOIN suppliers ON suppliers.id = order_items.supplier_id
+
+app.get("/customers/:customerId/orders", function (req, res) {
+  const customerId = req.params.customerId;
+
+  pool
+    .query(
+      "SELECT orders.order_reference, orders.order_date, products.product_name, product_availability.unit_price, suppliers.supplier_name, order_items.quantity FROM orders LEFT JOIN order_items ON orders.id = order_items.order_id INNER JOIN product_availability ON order_items.supplier_id = product_availability.supp_id INNER JOIN products ON product_availability.prod_id = products.id INNER JOIN suppliers ON suppliers.id = order_items.supplier_id WHERE customer_id=$1",
+      [customerId]
+    )
     .then((result) => res.json(result.rows))
     .catch((e) => console.error(e));
 });
