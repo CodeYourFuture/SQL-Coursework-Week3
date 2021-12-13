@@ -6,6 +6,7 @@ app.use(express.json());
 const PORT = process.env.PORT || 5000;
 
 const { Pool } = require("pg");
+const { prependOnceListener } = require("process");
 
 const pool = new Pool({
   user: "postgres",
@@ -50,7 +51,7 @@ app.get("/customers/:customerId/orders", (req, res) => {
   const customerId = req.params.customerId;
   pool
     .query(
-      "SELECT orders.order_reference, orders.order_date, products.product_name, product_availability.unit_price, supplier.supplier_name, order_items.quantity FROM order_items INNER JOIN orders on order_id = orders.id INNER JOIN customers ON customer_id = customers.id INNER JOIN product_availability ON prod_id=product_id INNER JOIN suppliers ON supp_id = suppliers.id INNER JOIN products ON prod_id = products.id WHERE customers.id=$1",
+      "SELECT orders.order_reference, orders.order_date, products.product_name, product_availability.unit_price, suppliers.supplier_name, order_items.quantity FROM orders INNER JOIN order_items ON order.id = order_items.order_id INNER JOIN products ON order_item.product_id = product_id INNER JOIN product_availability ON product_id = product_availability.prod_id INNER JOIN suppliers ON product_availability.supp_id = suppliers.id INNER JOIN products ON prod_id = products.id WHERE customers.id=$1",
       [customerId]
     )
     .then((result) => {
@@ -126,7 +127,7 @@ app.post("/customers", (req, res) => {
     .query("SELECT name FROM customers WHERE id=$1", [newName])
     .then((result) => {
       if (result.rows.length > 0) {
-        return res.status(404).send("Customer name already exists!");
+        return res.status(400).send("Customer name already exists!");
       } else {
         pool.query(
           "INSERT INTO customers (name, address, city, country) VALUES ($1, $2, $3, $4)",
@@ -147,20 +148,31 @@ app.post("/customers", (req, res) => {
 app.delete("/customers/:customerId", (req, res) => {
   const customerId = req.params.customerId;
   pool
-    .query("DELETE FROM orders WHERE customer_id=$1", [customerId])
-    .then(() => {
-      pool.query(
-        "DELETE FROM customers WHERE id=$1",
-        [customerId],
-        (err, result) => {
-          if (!err) {
-            res.status(200).send("Success! Customer deleted").json(result.rows);
-          } else {
-            res.status(400).send("Unable to process request");
-            console.error(err);
-          }
-        }
-      );
+    .query("SELECT * FROM orders WHERE customer_id =$1", [customerId])
+    .then((result) => {
+      if (result.rowCount !== 0) {
+        res.status(400).send("Cannot delete customer with active orders");
+      } else {
+        pool
+          .query("DELETE FROM orders WHERE customer_id=$1", [customerId])
+          .then(() => {
+            pool.query(
+              "DELETE FROM customers WHERE id=$1",
+              [customerId],
+              (err, result) => {
+                if (!err) {
+                  res
+                    .status(200)
+                    .send("Success! Customer deleted")
+                    .json(result.rows);
+                } else {
+                  res.status(400).send("Unable to process request");
+                  console.error(err);
+                }
+              }
+            );
+          });
+      }
     });
 });
 
@@ -202,7 +214,7 @@ app.get("/products", (req, res) => {
       if (!err) {
         res.status(200).json(result.rows);
       } else {
-        res.status(400);
+        res.status(500);
         console.error(err);
       }
     }
@@ -217,7 +229,7 @@ app.post("/products", (req, res) => {
     ])
     .then((result) => {
       if (result.rows.length > 0) {
-        return res.status(404).send("Product already exists");
+        return res.status(405).send("Product already exists");
       } else {
         pool.query(
           "INSERT INTO products (product_name) VALUES ($1)",
