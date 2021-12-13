@@ -214,19 +214,11 @@ app.post("/availability", (req, res) => {
 // });
 
 // ------
-//Post req at orders endpoint
-//creates new order record for existing customer (order_date, order_reference, customer_id )
-//Check if customerId params exists in db
-//Throw error if customerId doesn't exist
 
 app.post("/customers/:customerId/orders", function (req, res) {
   const customerId = req.params.customerId;
   const newDate = req.body.newDate;
   const newRef = req.body.newRef;
-
-  // if (!Number.isInteger(newPrice) || newPrice <= 0) {
-  //   return res.status(400).send("Please enter a positive price");
-  // }
 
   pool
     .query("SELECT * FROM customers WHERE id=$1", [customerId])
@@ -245,9 +237,6 @@ app.post("/customers/:customerId/orders", function (req, res) {
 });
 
 // PUT REQ-------
-//UPDATING info for customer(name, address, city and country)
-//customerId in params
-
 app.put("/customers/:customerId", function (req, res) {
   const customerId = req.params.customerId;
   const newName = req.body.name;
@@ -255,13 +244,49 @@ app.put("/customers/:customerId", function (req, res) {
   const newCity = req.body.city;
   const newCountry = req.body.country;
 
-
-
   pool
     .query("UPDATE customers SET name=$1, address=$2, city=$3, country=$4 WHERE id=$5", [newName, newAddress, newCity, newCountry, customerId])
     .then(() => res.send(`Customer ${customerId} updated!`))
     .catch((e) => console.error(e));
 });
+
+// -----Del requests
+
+app.delete("/orders/:orderId", function (req, res) {
+  const orderId = req.params.orderId;
+
+  pool
+    .query("DELETE FROM order_items WHERE order_id=$1", [orderId])
+    .then(() => {
+      pool
+        .query("DELETE FROM orders WHERE id=$1", [orderId])
+        .then(() => res.send(`Customer ${orderId} deleted!`))
+        .catch((e) => console.error(e));
+    })
+    .catch((e) => console.error(e));
+});
+
+//Delete existing customer record
+//Only del if customer has no orders
+app.delete("/customers/:customerId", function (req, res) {
+  const customerId = req.params.customerId;
+
+  pool
+    .query("SELECT * FROM orders WHERE customer_id=$1", [customerId])
+    .then((result) => {
+      if (result.rows.length >= 1) {
+        return res
+          .status(400)
+          .send(`Can't delete customer ${customerId}, they have an order!`);
+      } else {
+        pool
+          .query("DELETE FROM customers WHERE id=$1", [customerId])
+          .then(() => res.send(`Customer ${customerId} deleted!`))
+          .catch((e) => console.error(e));
+      }
+    });
+});
+
 
 app.listen(3000, function () {
   console.log("Server is listening on port 3000. Ready to accept requests!");
