@@ -48,7 +48,6 @@ app.get("/products", function (req, res) {
     .catch((e) => console.error(e));
 });
 
-
 // POST REQUESTS---------------------
 
 app.post("/customers", function (req, res) {
@@ -110,7 +109,6 @@ app.post("/customers", function (req, res) {
 //     );
 // });
 
-
 app.post("/availability", (req, res) => {
   const productId = req.body.prodId;
   const newPrice = req.body.price;
@@ -120,13 +118,20 @@ app.post("/availability", (req, res) => {
   }
   pool
     .query(
-      "SELECT products.id, suppliers.id FROM products INNER JOIN product_availability ON products.id = product_availability.prod_id INNER JOIN suppliers on suppliers.id = product_availability.supp_id WHERE products.id=$1 OR suppliers.id=$2",
+      "SELECT products.id, suppliers.id FROM products INNER JOIN product_availability ON products.id = product_availability.prod_id INNER JOIN suppliers on suppliers.id = product_availability.supp_id WHERE products.id=$1 AND suppliers.id=$2",
       [productId, supplierId]
     )
     .then((result) => {
-      if (result.rowCount === 0) {
+      // ----Logic incorrect
+      if (
+        result.fields[0].columnID === supplierId ||
+        result.fields[0].columnID === productsId
+      ) {
+        console.log(result.fields[0].columnID === supplierId);
         return res.status(400).send("Product or Supplier doesn't exist");
-      } else {
+      }
+      // ---------------------------
+      else {
         pool.query(
           "INSERT INTO product_availability (prod_id, unit_price, supp_id) VALUES ($1, $2, $3)",
           [productId, newPrice, supplierId],
@@ -157,7 +162,6 @@ app.post("/availability", (req, res) => {
 //   const newProductId = req.body.prodId;
 //   const newSuppId = req.body.suppId;
 //   const newPrice = req.body.price;
-
 
 //   if (!Number.isInteger(newPrice) || newPrice <= 0) {
 //     return res.status(400).send("Please enter a positive price");
@@ -209,7 +213,55 @@ app.post("/availability", (req, res) => {
 //     });
 // });
 
+// ------
+//Post req at orders endpoint
+//creates new order record for existing customer (order_date, order_reference, customer_id )
+//Check if customerId params exists in db
+//Throw error if customerId doesn't exist
 
+app.post("/customers/:customerId/orders", function (req, res) {
+  const customerId = req.params.customerId;
+  const newDate = req.body.newDate;
+  const newRef = req.body.newRef;
+
+  // if (!Number.isInteger(newPrice) || newPrice <= 0) {
+  //   return res.status(400).send("Please enter a positive price");
+  // }
+
+  pool
+    .query("SELECT * FROM customers WHERE id=$1", [customerId])
+    .then((result) => {
+      if (result.rows.length < 1) {
+        return res.status(400).send("customer doesn't exist!");
+      } else {
+        const query =
+          "INSERT INTO orders (customer_id, order_date, order_reference) VALUES ($1, $2, $3)";
+        pool
+          .query(query, [customerId, newDate, newRef])
+          .then(() => res.send("order added"))
+          .catch((e) => console.error(e));
+      }
+    });
+});
+
+// PUT REQ-------
+//UPDATING info for customer(name, address, city and country)
+//customerId in params
+
+app.put("/customers/:customerId", function (req, res) {
+  const customerId = req.params.customerId;
+  const newName = req.body.name;
+  const newAddress = req.body.address;
+  const newCity = req.body.city;
+  const newCountry = req.body.country;
+
+
+
+  pool
+    .query("UPDATE customers SET name=$1, address=$2, city=$3, country=$4 WHERE id=$5", [newName, newAddress, newCity, newCountry, customerId])
+    .then(() => res.send(`Customer ${customerId} updated!`))
+    .catch((e) => console.error(e));
+});
 
 app.listen(3000, function () {
   console.log("Server is listening on port 3000. Ready to accept requests!");
