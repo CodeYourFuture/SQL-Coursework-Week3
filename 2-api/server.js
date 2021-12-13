@@ -19,6 +19,32 @@ app.get("/customers", function (req, res) {
     res.json(result.rows);
   });
 });
+
+//Add a new GET endpoint /customers/:customerId/orders to load all the orders along with the items in the orders of a specific customer.
+app.get(
+  "/customers/:customerId/orders",
+  (request, response) => {
+    const customerId = request.params.customerId;
+
+    const selectQuery = `SELECT c.name, o.order_date,o.order_reference,p.product_name, pa.unit_price, s.supplier_name,oi.quantity
+                      FROM customers c
+                      INNER JOIN orders o ON c.id = o.customer_id
+                      INNER JOIN order_items oi ON oi.order_id = o.id
+                      INNER JOIN product_availability pa ON pa.prod_id =oi.product_id
+                      INNER JOIN suppliers s ON oi.supplier_id  = s.id
+                      INNER JOIN products p ON  oi.product_id = p.id
+
+                      WHERE c.id = ${customerId}
+                      ORDER BY order_date`;
+    pool.query(selectQuery, (error, result) => {
+      if (error) {
+        return response.send(error);
+      }
+      response.send(result.rows);
+    });
+  }
+);
+
 app.get("/customers/:customerId", function (req, res) {
   const customerId = req.params.customerId;
   pool.query(
