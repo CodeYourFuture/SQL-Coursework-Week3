@@ -50,9 +50,7 @@ app.get("/products", function (req, res) {
     .catch((e) => console.error(e));
 });
 
-// Return 
-// SELECT orders.order_references, orders.order_date, products.product_name, product_availability.unit_price, suppliers.supplier_name and order_items.quantity
-// FROM orders INNER JOIN order_items ON orders.id = order_items.order_id INNER JOIN order_items ON order_items.supplier_id = product_availability.supp_id INNER JOIN products ON product_availability.prod_id = products.id INNER JOIN suppliers ON suppliers.id = order_items.supplier_id
+
 
 app.get("/customers/:customerId/orders", function (req, res) {
   const customerId = req.params.customerId;
@@ -99,139 +97,36 @@ app.post("/customers", function (req, res) {
 });
 
 // -----------------
+// ONLY CHECKS IF PRICE POSITIVE & PRODUCT EXISTS IN DB
 
-// app.post("/availability", function (req, res) {
-//   const productId = req.body.prodId;
-//   const suppId = req.body.suppId;
-//   const price = req.body.price;
-
-//   if (!Number.isInteger(price) || price <= 0) {
-//     return res.status(400).send("Please enter a positive price");
-//   }
-
-//   pool.query(
-//     "SELECT products.id, suppliers.id FROM products, suppliers WHERE p.id=$1 AND s.id=$2", [productId, suppId])
-//     .then(
-//       (result) => {
-//         if (result.rows.length < 1) {
-//           return res.status(400).send("Product doesn't exist!");
-//         } else {
-//           const query =
-//             "INSERT INTO product_availability (prod_id, supp_id, unit_price) VALUES ($1, $2, $3)";
-//           pool
-//             .query(query, [productId, suppId, price])
-//             .then(() => res.send("availability added"))
-//             .catch((e) => console.error(e));
-//         }
-//       }
-//     );
-// });
-
-app.post("/availability", (req, res) => {
-  const productId = req.body.prodId;
+app.post("/availability", function (req, res) {
+  const newProductId = req.body.prodId;
+  const newSuppId = req.body.suppId;
   const newPrice = req.body.price;
-  const supplierId = req.body.supplierId;
-  if (newPrice <= 0) {
-    return res.status(404).send("Invalid pricing option");
+
+  if (!Number.isInteger(newPrice) || newPrice <= 0) {
+    return res.status(400).send("Please enter a positive price");
   }
+
   pool
     .query(
-      "SELECT products.id, suppliers.id FROM products INNER JOIN product_availability ON products.id = product_availability.prod_id INNER JOIN suppliers on suppliers.id = product_availability.supp_id WHERE products.id=$1 AND suppliers.id=$2",
-      [productId, supplierId]
+      "SELECT * FROM products WHERE id=$1", [newProductId]
     )
     .then((result) => {
-      // ----Logic incorrect
-      if (
-        result.fields[0].columnID === supplierId ||
-        result.fields[0].columnID === productsId
-      ) {
-        console.log(result.fields[0].columnID === supplierId);
-        return res.status(400).send("Product or Supplier doesn't exist");
-      }
-      // ---------------------------
-      else {
-        pool.query(
-          "INSERT INTO product_availability (prod_id, unit_price, supp_id) VALUES ($1, $2, $3)",
-          [productId, newPrice, supplierId],
-          (err, result) => {
-            if (!err) {
-              res
-                .status(200)
-                .send("New product availability added")
-                .json(result.rows);
-            } else {
-              res.status(400);
-              console.error(err);
-            }
-          }
-        );
+      if (result.rows.length < 1) {
+        return res.status(400).send("Product doesn't exist!");
+      } else {
+        const query =
+          "INSERT INTO product_availability (prod_id, supp_id, unit_price) VALUES ($1, $2, $3)";
+        pool
+          .query(query, [newProductId, newSuppId, newPrice])
+          .then(() => res.send("availability added"))
+          .catch((e) => console.error(e));
       }
     });
 });
-// ----------------------------------
-//insert prod_id,unit_price & supp_id -Donee
-//Check that the price is a positive integer -Done
-//Check both the productID and supplier ID's exist in the database,
-// otherwise return an error.
-//UNSURE OF WHAT NEEDS RETURNING
-//Adding both statements in pool.query didn't work ----  FROM product_availability WHERE prod_id=$1 OR supp_id = $2"
-
-// app.post("/availability", function (req, res) {
-//   const newProductId = req.body.prodId;
-//   const newSuppId = req.body.suppId;
-//   const newPrice = req.body.price;
-
-//   if (!Number.isInteger(newPrice) || newPrice <= 0) {
-//     return res.status(400).send("Please enter a positive price");
-//   }
-
-//   pool
-//     .query(
-//       "SELECT * FROM products WHERE id=$1", [newProductId]
-//     )
-//     .then((result) => {
-//       if (result.rows.length < 1) {
-//         return res.status(400).send("Product doesn't exist!");
-//       } else {
-//         const query =
-//           "INSERT INTO product_availability (prod_id, supp_id, unit_price) VALUES ($1, $2, $3)";
-//         pool
-//           .query(query, [newProductId, newSuppId, newPrice])
-//           .then(() => res.send("availability added"))
-//           .catch((e) => console.error(e));
-//       }
-//     });
-// });
 
 // ---------------
-// copy of availability post req
-
-// app.post("/availability", function (req, res) {
-//   const newProductId = req.body.prodId;
-//   const newSuppId = req.body.suppId;
-//   const newPrice = req.body.price;
-
-//   if (!Number.isInteger(newPrice) || newPrice <= 0) {
-//     return res.status(400).send("Please enter a positive price");
-//   }
-
-//   pool
-//     .query("SELECT * FROM products WHERE id=$1", [newProductId])
-//     .then((result) => {
-//       if (result.rows.length < 1) {
-//         return res.status(400).send("Product doesn't exist!");
-//       } else {
-//         const query =
-//           "INSERT INTO product_availability (prod_id, supp_id, unit_price) VALUES ($1, $2, $3)";
-//         pool
-//           .query(query, [newProductId, newSuppId, newPrice])
-//           .then(() => res.send("availability added"))
-//           .catch((e) => console.error(e));
-//       }
-//     });
-// });
-
-// ------
 
 app.post("/customers/:customerId/orders", function (req, res) {
   const customerId = req.params.customerId;
@@ -267,6 +162,7 @@ app.put("/customers/:customerId", function (req, res) {
     .then(() => res.send(`Customer ${customerId} updated!`))
     .catch((e) => console.error(e));
 });
+
 
 // -----Del requests
 
