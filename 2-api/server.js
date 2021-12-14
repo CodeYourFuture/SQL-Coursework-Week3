@@ -4,7 +4,7 @@ app.use(express.json());
 const { Pool } = require("pg");
 const pool = new Pool({
   user: "postgres",
-  host: "localhost",
+  host: "localhost", //Luke:if it is public in a real project be careful for the this and below credentials
   database: "cyf_ecommerce",
   password: "admin",
   port: 5432,
@@ -13,46 +13,44 @@ const pool = new Pool({
 //////////////////////////  GET POINTS //////////////////////////////////////
 
 // Add a new GET endpoint `/customers/` to load all the customers.
+// Luke: Added 1 space between * and FROM
 app.get("/customers", (req, res) => {
-  pool.query("SELECT *FROM customers", (result) => {
+  pool.query("SELECT * FROM customers", (result) => {
     res.json(result.rows);
   });
 });
+
 // Add a new GET endpoint `/products/` to load all the products.
 app.get("/products", (req, res) => {
-  pool.query("SELECT *FROM products", (result) => {
+  pool.query("SELECT * FROM products", (result) => {
     res.json(result.rows);
   });
 });
 // Add a new GET endpoint `/availability/` to load all the products.
 app.get("/availability", (req, res) => {
-  pool.query("SELECT *FROM product_availability", (result) => {
+  pool.query("SELECT * FROM product_availability", (result) => {
     res.json(result.rows);
   });
 });
 // Add a new GET endpoint `/orders` to load all the orders.
 app.get("/orders", (req, res) => {
-  pool.query("SELECT *FROM orders", (result) => {
+  pool.query("SELECT * FROM orders", (result) => {
     res.json(result.rows);
   });
 });
 // Add a new GET endpoint `/orders/:orderId`
 app.get("/orders/:orderId", (req, res) => {
   const orderId = req.params.orderId;
-  pool.query("SELECT *FROM orders WHERE id=$1", [orderId], (result) => {
+  pool.query("SELECT * FROM orders WHERE id=$1", [orderId], (result) => {
     res.json(result.rows);
   });
 });
-// Add a new GET endpoint `/orders/:orderId`
+// Add a new GET endpoint `/customers/:customerId`
 app.get("/customers/:customerId", (req, res) => {
   const customerId = req.params.customerId;
-  pool.query(
-    "SELECT *FROM customers WHERE id=$1",
-    [customerId],
-    (error, result) => {
-      res.json(result.rows);
-    }
-  );
+  pool.query("SELECT * FROM customers WHERE id=$1", [customerId], (result) => {
+    res.json(result.rows);
+  });
 });
 
 ///////////////////////////   TASKS   ////////////////////////////////////////////////////////////
@@ -61,7 +59,7 @@ app.get("/customers/:customerId", (req, res) => {
 app.get("/customers/:customerId", (req, res) => {
   const customerId = req.params.customerId;
   pool
-    .query("SELECT *FROM customers WHERE id=$1", [customerId])
+    .query("SELECT * FROM customers WHERE id=$1", [customerId])
     .then((result) => res.json(result.rows))
     .catch((error) => console.log(error));
 });
@@ -98,18 +96,20 @@ app.post("/availability", (req, res) => {
   const price = req.body.unit_price;
   const supplierId = req.body.supp_id;
 
-  if (price <= 0 || !supplierId || !productId)
+  // Luke: What happens here if I send a non-number values for price? Can you handle that any better?
+
+  if (price <= 0 || isNaN(price) || !supplierId || !productId)
     return res.status(400).send("Please fill al the fields correct!");
   else
     pool
-      .query("SELECT *FROM product_availability WHERE prod_id=$1", [productId])
+      .query("SELECT * FROM product_availability WHERE prod_id=$1", [productId])
       .then((result) => {
         if (result.rows.length === 0) {
           return res.status(400).json("the product id does not exist!");
         }
       });
   pool
-    .query("SELECT *FROM product_availability WHERE supp_id=$1", [supplierId])
+    .query("SELECT * FROM product_availability WHERE supp_id=$1", [supplierId])
     .then((result) => {
       if (result.rows.length === 0) {
         return res.status(400).json("the supplier id does not exist!");
@@ -132,7 +132,7 @@ app.post("/customers/:customerId/orders", (req, res) => {
   const orderDate = req.body.order_date;
   const orderReference = req.body.order_reference;
   pool
-    .query("SELECT *FROM customers WHERE id=$1", [customerId])
+    .query("SELECT * FROM customers WHERE id=$1", [customerId])
     .then((result) => {
       if (result.rows.length > 0) {
         pool
