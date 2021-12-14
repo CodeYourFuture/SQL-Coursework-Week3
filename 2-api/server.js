@@ -10,30 +10,41 @@ const pool = new Pool({
   port: 5432,
 });
 
-//////////////////////////  GET POINTS //////////////////////////////////////
-
 // Add a new GET endpoint `/customers/` to load all the customers.
 // Luke: Added 1 space between * and FROM
 app.get("/customers", (req, res) => {
+<<<<<<< HEAD
   pool.query("SELECT * FROM customers", (result) => {
+=======
+  pool.query("SELECT *FROM customers", (error, result) => {
+>>>>>>> parent of 5ed95b4 (Task 7-10)
     res.json(result.rows);
   });
 });
 
 // Add a new GET endpoint `/products/` to load all the products.
 app.get("/products", (req, res) => {
+<<<<<<< HEAD
   pool.query("SELECT * FROM products", (result) => {
+=======
+  pool.query("SELECT *FROM products", (error, result) => {
+>>>>>>> parent of 5ed95b4 (Task 7-10)
     res.json(result.rows);
   });
 });
 // Add a new GET endpoint `/availability/` to load all the products.
 app.get("/availability", (req, res) => {
+<<<<<<< HEAD
   pool.query("SELECT * FROM product_availability", (result) => {
+=======
+  pool.query("SELECT *FROM product_availability", (error, result) => {
+>>>>>>> parent of 5ed95b4 (Task 7-10)
     res.json(result.rows);
   });
 });
 // Add a new GET endpoint `/orders` to load all the orders.
 app.get("/orders", (req, res) => {
+<<<<<<< HEAD
   pool.query("SELECT * FROM orders", (result) => {
     res.json(result.rows);
   });
@@ -54,12 +65,22 @@ app.get("/customers/:customerId", (req, res) => {
 });
 
 ///////////////////////////   TASKS   ////////////////////////////////////////////////////////////
+=======
+  pool.query("SELECT *FROM orders", (error, result) => {
+    res.json(result.rows);
+  });
+});
+>>>>>>> parent of 5ed95b4 (Task 7-10)
 
 // Task -1 Add a new GET endpoint `/customers/:customerId` to load a single customer by ID.
-app.get("/customers/:customerId", (req, res) => {
-  const customerId = req.params.customerId;
+app.get("/customers/:id", (req, res) => {
+  const id = req.params.id;
   pool
+<<<<<<< HEAD
     .query("SELECT * FROM customers WHERE id=$1", [customerId])
+=======
+    .query("SELECT *FROM customers WHERE id=$1", [id])
+>>>>>>> parent of 5ed95b4 (Task 7-10)
     .then((result) => res.json(result.rows))
     .catch((error) => console.log(error));
 });
@@ -146,68 +167,6 @@ app.post("/customers/:customerId/orders", (req, res) => {
         return res.status(400).send("customer id does not exist!");
       }
     });
-});
-//Task 7- Add a new PUT endpoint `/customers/:customerId` to update an existing customer (name, address, city and country).
-
-app.put("/customers/:customerId", (req, res) => {
-  const customerId = req.params.customerId;
-  const { name, address, city, country } = req.body;
-  pool
-    .query(
-      "UPDATE customers SET name=$1, address=$2, city=$3, country=$4 WHERE id=$5",
-      [name, address, city, country, customerId]
-    )
-    .then(() => res.status(200).json(`customer ${customerId} updated`))
-    .catch((error) => console.log(error));
-});
-
-//Task 8 - Add a new DELETE endpoint `/orders/:orderId` to delete an existing order along with all the associated order items.
-
-app.delete("/orders/:orderId", (req, res) => {
-  const orderId = req.params.orderId;
-  pool
-    .query("DELETE FROM order_items WHERE order_id=$1", [orderId])
-    .then(() => {
-      pool
-        .query("DELETE FROM orders WHERE id=$1", [orderId])
-        .then(() => res.status(200).json(`Order id=${orderId} deleted`))
-        .catch((error) => console.log(error));
-    });
-});
-//Task 9-  Add a new DELETE endpoint `/customers/:customerId` to delete an existing customer only if this customer doesn't have orders.
-
-app.delete("/customers/:customerId", (req, res) => {
-  const customerId = req.params.customerId;
-  pool
-    .query("SELECT FROM orders WHERE customer_id=$1", [customerId])
-    .then((result) => {
-      if (result.rows.length === 0) {
-        pool
-          .query("DELETE FROM customers WHERE id=$1", [customerId])
-          .then(() => res.status(200).json(`Customer ${customerId} deleted`))
-          .catch((error) => console.log(error));
-      } else {
-        res.json("As customer has order(s) can not be deleted!");
-      }
-    });
-});
-
-//Task 10- - Add a new GET endpoint `/customers/:customerId/orders` to load all the orders along with the items in the orders of a specific customer.
-//Especially, the following information should be returned: order references, order dates, product names, unit prices, suppliers and quantities.
-
-app.get("/customers/:customerId/orders", (req, res) => {
-  const customerId = req.params.customerId;
-  const query = `SELECT customers.id,orders.order_reference,orders.order_date,products.product_name,product_availability.unit_price,suppliers.supplier_name, order_items.quantity 
-  FROM orders 
-  INNER JOIN order_items ON orders.id = order_items.order_id 
-  INNER JOIN products ON products.id=order_items.product_id 
-  INNER JOIN product_availability ON products.id=product_availability.prod_id 
-  INNER JOIN suppliers ON suppliers.id=product_availability.supp_id 
-  INNER JOIN customers ON customers.id=orders.customer_id 
-  WHERE customers.id =$1`;
-  pool.query(query, [customerId]).then((result) => {
-    res.json(result.rows);
-  });
 });
 
 app.listen(3000, () => {
