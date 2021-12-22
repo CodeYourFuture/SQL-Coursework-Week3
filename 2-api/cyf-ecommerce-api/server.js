@@ -12,7 +12,7 @@ const pool = new Pool({
 });
 
 app.get("/",(req,res) => {
-    res.send("hi");
+    res.send("Hello!");
 });
 
 app.get(`/customers`, (req, res) => {
