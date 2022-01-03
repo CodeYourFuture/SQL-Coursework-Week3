@@ -1,15 +1,6 @@
 const express = require('express');
 const router = express.Router();
-
-const { Pool } = require("pg");
-
-const pool = new Pool({
-  user: "postgres",
-  host: "localhost",
-  database: "cyf_ecommerce",
-  password: "123456789",
-  port: 5432,
-});
+const pool = require('../utils/pool')
 
 // return all the customers from the database
 router.get("/", (req, res) => {
@@ -88,6 +79,43 @@ router.post("/:customerId/orders", (req, res) => {
       }
     }
   });
+});
+
+// POST endpoint `/customers` to create a new customer with name, address, city and country
+router.post("/", (req, res) => {
+  const { name, address, city, country } = req.body; // get the each property from request object
+  if (!name || !address || !city || !country) {
+    // if not included any of these, respond status 400
+    return res
+      .status(400)
+      .send(
+        `Please fill everything in the form including name, address, city and country.`
+      );
+  }
+  pool
+    .query("SELECT * FROM customers WHERE name=$1 AND address=$2 AND city=$3", [
+      name,
+      address,
+      city,
+    ])
+    .then((result) => {
+      if (result.rows.length > 0) {
+        // if customer already in the customers database, do not add it again
+        res
+          .status(400)
+          .send(`The customer is already in the customers database.`);
+      } else {
+        // if customer is not already in the customers database, insert it into the customers
+        pool
+          .query(
+            "INSERT INTO customers (name, address, city, country) VALUES($1, $2, $3, $4)",
+            [name, address, city, country]
+          )
+          .then(() => {
+            res.send(`Customer is added to the customers.`);
+          });
+      }
+    });
 });
 
 // GET endpoint `/customers/:customerId` to load a single customer by ID.
