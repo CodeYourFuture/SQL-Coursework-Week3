@@ -41,15 +41,29 @@ app.get("/suppliers", (req, res) => {
 
 app.get("/products", (req, res) => {
   pool.connect().then((client) => {
-    return client
-      .query(`
+    let thisQuery;
+    if (req.query.name) {
+      (thisQuery = `
                 SELECT p.product_name, pa.unit_price, s.supplier_name
                 FROM product_availability AS pa
                 JOIN products AS p
                 on p.id = pa.prod_id
                 JOIN suppliers AS s
                 ON pa.supp_id = s.id
-            `)
+                WHERE p.product_name LIKE(%$1%)
+            `), [req.query.name];
+    }else{
+      thisQuery = `
+                SELECT p.product_name, pa.unit_price, s.supplier_name
+                FROM product_availability AS pa
+                JOIN products AS p
+                on p.id = pa.prod_id
+                JOIN suppliers AS s
+                ON pa.supp_id = s.id
+            `;
+    }
+    return client
+      .query(thisQuery)
       .then((result) => {
         client.release();
         res.send(result.rows);
