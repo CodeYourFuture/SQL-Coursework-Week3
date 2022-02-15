@@ -74,6 +74,27 @@ app.post("/customers", (req, res) => {
   });
 });
 
+//updates an existing customer with the specified id 
+app.put("/customers/:customerId", (req, res) => {
+  pool.connect().then((client) => {
+    const c = req.body;
+    const cId = req.params.customerId;
+    return client.query(
+      `
+        UPDATE customers
+        SET name=$1, address=$2, city=$3, country=$4 
+        WHERE id=$5
+      `,
+      [c.name, c.address, c.city, c.country, cId]
+    ).then(() => {
+      res.send(`Successfully updated customer with the id of ${cId}`)
+    }).catch((error) => {
+      console.error(error);
+      res.status(400).send(error);
+    });
+  });
+});
+
 //adds new order based on customer id
 app.post("/customers/:customerId/orders", (req, res) => {
   pool.connect().then((client) => {
@@ -88,7 +109,7 @@ app.post("/customers/:customerId/orders", (req, res) => {
           res.status(400).send(`
                                 Something went wrong...
                                 Double check you have the correct customer ID
-                                `)
+                                `);
         } else {
           pool
             .query(
@@ -200,13 +221,20 @@ app.post("/availability", (req, res) => {
 
 app.get("/", (req, res) => {
   res.send(
-    `welcome to the cyf_ecommerce_api
-
+    `
+      welcome to the cyf_ecommerce_api
+      ================================
         Routes Included:
         ----------------
-        * /customers - returns all customers
-        * /suppliers - returns all the suppliers
-        * /products - return product names + costs + supplier`
+        * (get)/customers - returns all customers
+        ----* (get)/customers/:customerId - returns customer matching id
+        ----* (post)/customers - adds a new customer
+        ----* (put)/customers/:customerId - updates an existing customer
+        ----* (post)/customers/:customerId/orders - adds new order for customer w/ matching id
+        * (get)/suppliers - returns all the suppliers
+        * (get)/products - return product names + costs + supplier
+        * (post)/availability = add new product availability 
+        `
   );
 });
 
