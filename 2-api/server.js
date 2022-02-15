@@ -1,8 +1,3 @@
-/*
-to-do:
-- add status codes to errors.
-*/
-
 const { response } = require("express");
 const express = require("express");
 const postgres = require("pg");
@@ -79,40 +74,39 @@ app.post("/customers", (req, res) => {
   });
 });
 
-/* 
-Add a new POST endpoint `/customers/:customerId/orders` 
-to create a new order (including an order date, and an order
-reference) for a customer. Check that the customerId corresponds
-to an existing customer or return an error.
-*/
-app.post("/customers/:customerID/orders", (req, res) => {
+//adds new order based on customer id
+app.post("/customers/:customerId/orders", (req, res) => {
   pool.connect().then((client) => {
     return client
-      .query(`SELECT COUNT(*) FROM customers WHERE id=$1`,[req.params.customerId])
+      .query(`SELECT COUNT(*) FROM customers WHERE id=$1`, [
+        req.params.customerId,
+      ])
       .then((result) => {
-        if(parseInt(result) !== 1){
+        if (parseInt(result.rows[0].count) !== 1) {
           /* either somehow there are multiple customers with the 
           same ID or that customer doesn't exist */
-          throw "Something went wrong :/"
+          res.status(400).send(`
+                                Something went wrong...
+                                Double check you have the correct customer ID
+                                `)
+        } else {
+          pool
+            .query(
+              `
+                INSERT INTO orders (order_date, order_reference)
+                VALUES($1, $2)
+              `,
+              [`${req.body.order_date}`, `${req.body.order_reference}`]
+            )
+            .then(() => {
+              client.release();
+              res.send("Successfully added new order.");
+            })
+            .catch((error) => {
+              console.error(error);
+              res.send(error);
+            });
         }
-      })
-      .query(
-        `
-          INSERT INTO orders (order_date, order_reference)
-          VALUES($1, $2)
-        `,
-        [
-          `${req.body.order_date}`,
-          `${req.body.order_reference}`,
-        ]
-      )
-      .then(() => {
-        client.release();
-        res.send("Successfully added new order.");
-      })
-      .catch((error) => {
-        console.error(error);
-        res.send(error);
       });
   });
 });
