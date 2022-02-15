@@ -65,7 +65,7 @@ app.post("/customers", (req, res) => {
       )
       .then(() => {
         client.release();
-        res.send(`Successfully added new customer.`);
+        res.status(201).send(`Successfully added new customer.`);
       })
       .catch((error) => {
         console.error(error);
@@ -121,7 +121,7 @@ app.post("/customers/:customerId/orders", (req, res) => {
             )
             .then(() => {
               client.release();
-              res.send("Successfully added new order.");
+              res.status(201).send("Successfully added new order.");
             })
             .catch((error) => {
               console.error(error);
@@ -210,7 +210,7 @@ app.post("/availability", (req, res) => {
       )
       .then(() => {
         client.release();
-        res.send(`Successfully added new product availability.`);
+        res.status(201).send(`Successfully added new product availability.`);
       })
       .catch((error) => {
         console.error(error);
@@ -224,16 +224,16 @@ app.get("/", (req, res) => {
     `
       welcome to the cyf_ecommerce_api
       ================================
-        Routes Included:
-        ----------------
-        * (get)/customers - returns all customers
-        ----* (get)/customers/:customerId - returns customer matching id
-        ----* (post)/customers - adds a new customer
-        ----* (put)/customers/:customerId - updates an existing customer
-        ----* (post)/customers/:customerId/orders - adds new order for customer w/ matching id
-        * (get)/suppliers - returns all the suppliers
-        * (get)/products - return product names + costs + supplier
-        * (post)/availability = add new product availability 
+      --Routes Included:
+      ------------------
+      --* (get)/customers - returns all customers
+      ------* (get)/customers/:customerId - returns customer matching id
+      ------* (post)/customers - adds a new customer
+      ------* (put)/customers/:customerId - updates an existing customer
+      ------* (post)/customers/:customerId/orders - adds new order for customer w/ matching id
+      --* (get)/suppliers - returns all the suppliers
+      --* (get)/products - return product names + costs + supplier
+      --* (post)/availability = add new product availability 
         `
   );
 });
