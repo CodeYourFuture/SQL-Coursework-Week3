@@ -181,6 +181,147 @@ app.post("/availability", function (req, res) {
     });
 });
 
+// GET A CUSTOMER'S ORDER
+app.get("/customers/:customerId/orders", function (req, res) {
+  let customerId = req.params.customerId;
+  let query = `SELECT customers.name,orders.order_reference, orders.order_date, products.product_name,product_availability.unit_price, suppliers.supplier_name, order_items.quantity
+   FROM customers
+   JOIN orders
+   ON orders.id = orders.customer_id
+   JOIN order_items 
+   ON order_items.order_id = orders.id
+   JOIN products
+   ON products.id = order_items.product_id
+   JOIN suppliers 
+   ON suppliers.id = order_items.supplier_id
+   JOIN product_availability 
+   ON product_availability.supp_id = order_items.product_id
+   WHERE customers.id = $1
+   ORDER BY orders.order_date `;
+  pool
+    .query(query, [customerId])
+    .then((result) => res.json(result.rows))
+    .catch((error) => {
+      console.error(error);
+      res.status(500).json(error);
+    });
+});
+
+// ADDING A ORDER
+app.post("/customers/:customerId/orders", function (req, res) {
+  let customerId = req.params.customerId;
+  let orderRef = req.body.order_reference;
+  let orderDate = req.body.order_date;
+
+  pool
+    .query("SELECT * FROM customers where id = $1", [customerId])
+    .then((result) => {
+      if (result.rows.length === 0) {
+        return res
+          .status(400)
+          .send({ msg: `Customer:${customerId} does not exist` });
+      } else {
+        pool
+          .query(
+            "INSERT INTO customers(customer_id,order_reference,order_date ) VALUES($1, $2, $3)",
+            [customerId, orderRef, orderDate]
+          )
+          .then(() => res.send({ msg: `Order:${orderRef} added` }))
+          .catch((error) => {
+            console.log(error);
+            res.json(error);
+          });
+      }
+    });
+});
+
+//  UPDATING CUSTOMER DETAILS
+app.put("/customers/:customerId", function (req, res) {
+  let customerId = req.params.customerId;
+  const newName = req.body.name;
+  const newAddress = req.body.address;
+  const newCity = req.body.city;
+  const newCountry = req.body.country;
+
+  // Checking if the customer with Id entered exist or not
+  pool
+    .query(`SELECT * FROM customers WHERE id = $1`, [customerId])
+    .then((result) => {
+      if (result.rows.length == 0) {
+        return res
+          .status(404)
+          .send({ msg: `Customer ${customerId} doesn't exist` });
+      }
+    });
+
+  // First we select the customer then we can update the changes else we will can return the old info
+  pool
+    .query(`SELECT * FROM customers WHERE id = $1`, [customerId])
+    .then((result) => {
+      let originalCustomer = result.rows[0]; //Returns object
+      let updateQuery = `UPDATE customers
+        SET name = $2, address = $3, city = $4, country = $5
+        WHERE id = $1`;
+      let params = [
+        customerId,
+        newName || originalCustomer.name,
+        newAddress || originalCustomer.address,
+        newCity || originalCustomer.city,
+        newCountry || originalCustomer.country,
+      ];
+
+      pool
+        .query(updateQuery, params)
+        .then(() => res.send(`Customer ${customerId} updated!`))
+        .catch((error) => {
+          console.error(error);
+          res.status(500).json(error);
+        });
+    });
+});
+
+// DELETE AN ORDER
+app.delete("/orders/:orderId", function (req, res) {
+  let orderId = req.params.orderId;
+  // First we have to delete all the items in that order
+  let itemsDelQuery = `DELETE FROM order_items where order_id = $1 `;
+  let orderDelQuery = `DELETE FROM orders where id = $1`;
+  pool
+    .query(itemsDelQuery, [orderId])
+    .then(() => pool.query(orderDelQuery, [orderId]))
+    .then(() => res.send({ msg: `Order: ${orderId} deleted successfully` }))
+    .catch((error) => {
+      console.error(error);
+      res.status(500).json(error);
+    });
+});
+
+//  DELETE A CUSTOMER
+app.delete("/customers/:customerId", function (req, res) {
+  let customerId = req.params.customerId;
+
+  let query = `DELETE FROM customers where id = $1`;
+
+  pool
+    .query(`SELECT FROM orders WHERE customer_id = $1`, [customerId])
+    .then((result) => {
+      if (result.rows.length >= 1) {
+        return res.status(400).send({
+          msg: `Customer: ${customerId} can not be deleted because they have pending orders !`,
+        });
+      }
+      pool
+        .query(query, [customerId])
+        .then(() =>
+          res.send({ msg: `Customer: ${customerId} deleted successfully ` })
+        )
+        .catch((error) => {
+          console.error(error);
+          res.status(500).json(error);
+        });
+    });
+});
+
 app.listen(5000, function () {
   console.log("Server is listening on port 5000. Ready to accept requests!");
 });
