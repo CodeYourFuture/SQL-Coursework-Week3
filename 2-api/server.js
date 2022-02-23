@@ -1,4 +1,4 @@
-const { response } = require("express");
+const { response, query } = require("express");
 const express = require("express");
 const postgres = require("pg");
 app = express();
@@ -109,56 +109,27 @@ app.delete("/customers/:customerId", (req, res) => {
     return client
       .query(
         `
-          SELECT COUNT(*) FROM orders WHERE customer_id=$1 
+          SELECT * FROM orders WHERE customer_id=$1
         `,
         [cId]
       )
       .then((result) => {
-        if (parseInt(result.rows[0].count > 0)) {
-          //has orders therefore can not delete
-          res.status(400).send(
-            `
-              Sorry, that customer has active orders
-              and therefore cannot be deleted
-            `
-          );
-        } else {
-          pool
-            .query(
-              `
-                DELETE oi
-                FROM order_items AS oi
-                JOIN orders AS o
-                ON oi.order_id = 0.id
-                WHERE o.customer_id = $1
-              `,
-              [cId]
-            )
-            .then(() => {
-              pool.query(
-                `
-                DELETE FROM orders WHERE customer_id=$1
-              `,
-                [cId]
-              );
-            })
-            .then(() => {
-              pool.query(
-                `
-                DELETE FROM customers WHERE id=$1
-              `,
-                [cId]
-              );
-            })
-            .then(() => {
-              client.release();
-              res.send(`Successfully deleted customer with ID: ${cId}`);
-            })
-            .catch((error) => {
-              console.error(error);
-              res.send(error);
-            });
+        if(result.rowCount > 0){
+          //has orders so can not delete
+          res.status(400).send("This customer has active orders.")
+          throw "This customer has active orders."
         }
+        pool.query(
+          `
+            DELETE FROM customers WHERE id=$1  
+          `,
+          [cId]
+        )
+        res.send(`Successfully deleted customer with ID: ${cId}`)
+      })
+      .catch((error) => {
+        console.error(error);
+        res.send(error);
       });
   });
 });
