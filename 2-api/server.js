@@ -98,11 +98,7 @@ app.put("/customers/:customerId", (req, res) => {
   });
 });
 
-/*
-  - Add a new DELETE endpoint `/customers/:customerId`
-  to delete an existing customer only if this customer
-  doesn't have orders.
-*/
+//deletes a customer provided they do not have any active orders
 app.delete("/customers/:customerId", (req, res) => {
   const cId = req.params.customerId;
   pool.connect().then((client) => {
@@ -119,13 +115,20 @@ app.delete("/customers/:customerId", (req, res) => {
           res.status(400).send("This customer has active orders.")
           throw "This customer has active orders."
         }
-        pool.query(
-          `
-            DELETE FROM customers WHERE id=$1  
-          `,
-          [cId]
+        pool
+          .query(
+            `
+              DELETE FROM customers WHERE id=$1  
+            `,
+            [cId]
         )
-        res.send(`Successfully deleted customer with ID: ${cId}`)
+          .then(() => {
+            res.send(`Successfully deleted customer with ID: ${cId}`);
+          })
+          .catch((error) => {
+            console.error(error);
+            res.send(error);
+          })
       })
       .catch((error) => {
         console.error(error);
