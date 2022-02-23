@@ -112,7 +112,6 @@ app.delete("/customers/:customerId", (req, res) => {
       .then((result) => {
         if(result.rowCount > 0){
           //has orders so can not delete
-          res.status(400).send("This customer has active orders.")
           throw "This customer has active orders."
         }
         pool
