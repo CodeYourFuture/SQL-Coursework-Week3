@@ -10,20 +10,37 @@ const pool = new postgres.Pool({
   connectionString: process.env.PG_CONNECT,
 });
 
-/*
-  - Add a new GET endpoint `/customers/:customerId/orders`
-  to load all the orders along with the items in the orders
-  of a specific customer. Especially, the following information
-  should be returned: order references, order dates, product names,
-  unit prices, suppliers and quantities.
-*/
+//fetches details of specified customer's orders.
 app.get("/customers/:customerId/orders", (req, res) => {
   pool.connect().then((client) => {
-    
+    const cId = req.params.customerId;
+    return client
+      .query(
+        `
+          SELECT
+            o.order_reference, p.product_name,
+            pa.unit_price, s.supplier_name, oi.quantity
+          FROM order_items AS oi
+          JOIN orders AS o ON o.id = oi.order_id
+          JOIN products AS p ON p.id = oi.product_id
+          JOIN product_availability AS pa ON pa.prod_id = oi.product_id
+          JOIN suppliers AS s ON s.id = oi.supplier_id
+          WHERE o.customer_id=$1
+        `,
+        [cId]
+      )
+      .then((result) => {
+        client.release();
+        res.send(result.rows);
+      })
+      .catch((error) => {
+        console.error(error);
+        res.send(error);
+      })
   });
 });
 
-// fetches customer matching the provided id
+//fetches customer matching the provided id
 app.get("/customers/:customerId", (req, res) => {
   pool.connect().then((client) => {
     return client
@@ -304,6 +321,7 @@ app.post("/availability", (req, res) => {
   });
 });
 
+//root
 app.get("/", (req, res) => {
   res.send(
     `
@@ -323,6 +341,7 @@ app.get("/", (req, res) => {
   );
 });
 
+//listen port
 app.listen(PORT, () => {
   console.log(`Listening on port: ${PORT}`);
 });
