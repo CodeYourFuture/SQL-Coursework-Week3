@@ -10,6 +10,19 @@ const pool = new postgres.Pool({
   connectionString: process.env.PG_CONNECT,
 });
 
+/*
+  - Add a new GET endpoint `/customers/:customerId/orders`
+  to load all the orders along with the items in the orders
+  of a specific customer. Especially, the following information
+  should be returned: order references, order dates, product names,
+  unit prices, suppliers and quantities.
+*/
+app.get("/customers/:customerId/orders", (req, res) => {
+  pool.connect().then((client) => {
+    
+  });
+});
+
 // fetches customer matching the provided id
 app.get("/customers/:customerId", (req, res) => {
   pool.connect().then((client) => {
@@ -110,7 +123,7 @@ app.delete("/customers/:customerId", (req, res) => {
         [cId]
       )
       .then((result) => {
-        if(result.rowCount > 0){
+        if (result.rowCount > 0) {
           //has orders so can not delete
           throw "This customer has active orders."
         }
@@ -120,18 +133,18 @@ app.delete("/customers/:customerId", (req, res) => {
               DELETE FROM customers WHERE id=$1  
             `,
             [cId]
-        )
+          )
           .then(() => {
             res.send(`Successfully deleted customer with ID: ${cId}`);
           })
           .catch((error) => {
             console.error(error);
-            res.send(error);
-          })
+            res.status(400).send(error);
+          });
       })
       .catch((error) => {
         console.error(error);
-        res.send(error);
+        res.status(400).send(error);
       });
   });
 });
