@@ -1,4 +1,3 @@
-const { query } = require("express");
 const express = require("express");
 const { Pool } = require("pg");
 
@@ -151,6 +150,32 @@ app.post("/customers/:customerId/orders", (req, res) => {
             res.status(500).send(err);
           });
       }
+    });
+});
+
+//Update customer detail
+app.put("/customers/:customerId", (req, res) => {
+  const customerDetails = req.body;
+  const customerId = req.params.customerId;
+  const arr = Object.keys(customerDetails);
+  let setQuery = "";
+
+  arr.forEach((key, index) => {
+    setQuery += `${key}='${customerDetails[key]}'`;
+
+    if (index < arr.length - 1) {
+      setQuery += ",";
+    }
+  });
+  let query = `UPDATE customers  SET ${setQuery} WHERE id=${customerId}`;
+
+  pool
+    .query(query)
+    .then(() => {
+      res.send("updated");
+    })
+    .catch((err) => {
+      res.status(500).send(err);
     });
 });
 
