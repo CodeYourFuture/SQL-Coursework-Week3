@@ -130,29 +130,44 @@ app.put("/customers/:customerId", (req, res) => {
     });
 });
 app.delete("/orders/:orderId", (req, res) => {
-  const productName = req.body.product_name;
+  const orderId = req.params.orderId;
 
-  const query = "INSERT INTO products ( product_name) VALUES ($1)";
+  const query = "DELETE FROM orders WHERE id = $1";
 
   return pool
-    .query(query, [productName])
-    .then(() => res.status(200).send("Product Added"))
+    .query(query, [orderId])
+    .then(() => res.status(200).send("Order Deleted!"))
     .catch((error) => {
       console.error(error);
       res.status(500).json(error);
     });
 });
 app.delete("/customers/:customerId", (req, res) => {
-  const productName = req.body.product_name;
+  const { customerId } = req.params;
 
-  const query = "INSERT INTO products ( product_name) VALUES ($1)";
-
-  return pool
-    .query(query, [productName])
-    .then(() => res.status(200).send("Product Added"))
-    .catch((error) => {
-      console.error(error);
-      res.status(500).json(error);
+  const query = "DELETE FROM customers WHERE id = $1";
+  pool
+    .query("SELECT * FROM orders WHERE customer_id = $1", [customerId])
+    .then((data) => {
+      if (data.rows.length > 0) {
+        res.status(500).send("Error has order");
+      } else {
+        pool
+          .query("SELECT * FROM customers WHERE id = $1", [customerId])
+          .then((data) => {
+            if (data.rows.length) {
+              pool
+                .query(query, [customerId])
+                .then(() => res.status(200).send("Customer Deleted!"))
+                .catch((error) => {
+                  console.error(error);
+                  res.status(500).json(error);
+                });
+            } else {
+              res.status(500).send("Error Customer not Exist");
+            }
+          });
+      }
     });
 });
 app.get("/customers/:customerId/orders", (req, res) => {
