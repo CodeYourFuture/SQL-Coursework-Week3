@@ -4,8 +4,11 @@ import {
   getCustomers,
   getCustomerById,
   addCustomer,
+  updateCustomer,
+  deleteCustomer,
+  getCustomerByIdWithOrderItems
 } from './controllers/customers';
-import { createOrder } from './controllers/orders';
+import { createOrder, deleteOrder } from './controllers/orders';
 import { addProduct, getProducts } from './controllers/products';
 import { getSuppliers } from './controllers/suppliers';
 import welcome from './controllers/welcome';
@@ -19,8 +22,12 @@ routes
   .get('/suppliers', getSuppliers)
   .post('/availability', createAvailability)
   .get('/customers', getCustomers)
-  .get('/customers/:customerId', getCustomerById)
   .post('/customers', addCustomer)
-  .post('/customers/:customerId/orders', createOrder);
+  .get('/customers/:customerId', getCustomerById)
+  .get('/customers/:customerId/orders', getCustomerByIdWithOrderItems)
+  .put('/customers/:customerId', updateCustomer)
+  .delete('/customers/:customerId', deleteCustomer)
+  .post('/customers/:customerId/orders', createOrder)
+  .delete('/orders/:orderId', deleteOrder);
 
 export default routes;
