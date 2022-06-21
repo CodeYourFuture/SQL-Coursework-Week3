@@ -104,25 +104,42 @@ app.post("availability", (req, res) => {
 });
 
 app.post("/customers/:customerId/orders", (req, res) => {
-  const productName = req.body.product_name;
+  const customerId = req.params.customerId;
+  const orderDate = req.body.orderDate;
+  const orderRef = req.body.orderRef;
+  const query = "SELECT * FROM customers WHERE id = $1";
 
-  const query = "INSERT INTO products ( product_name) VALUES ($1)";
-
-  return pool
-    .query(query, [productName])
-    .then(() => res.status(200).send("Product Added"))
+  pool
+    .query(query, [customerId])
+    .then((data) => {
+      if (data.rows) {
+        return res.status(400).send("Customer not exist!");
+      } else {
+        pool
+          .query(
+            "INSERT INTO orders (order_date, order_reference, customer_id) VALUES ($1, $2, $3)",
+            [orderDate, orderRef, customerId]
+          )
+          .then(() => res.send("Order added"))
+          .catch((error) => console.log(error));
+      }
+    })
     .catch((error) => {
       console.error(error);
       res.status(500).json(error);
     });
 });
 app.put("/customers/:customerId", (req, res) => {
-  const productName = req.body.product_name;
+  const customerId = req.params.customerId;
+  const name = req.body.name;
+  const address = req.body.address;
+  const city = req.body.city;
+  const country = req.body.country;
 
-  const query = "INSERT INTO products ( product_name) VALUES ($1)";
+  const query = "UPDATE customers SET   name = $2, address = $3, city=$4, country= $5 WHERE id =$1 ";
 
   return pool
-    .query(query, [productName])
+    .query(query, [customerId, name, address, city, country])
     .then(() => res.status(200).send("Product Added"))
     .catch((error) => {
       console.error(error);
