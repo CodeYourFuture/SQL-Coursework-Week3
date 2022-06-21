@@ -2,6 +2,8 @@ const express = require("express");
 const app = express();
 const { Pool } = require("pg");
 
+app.use(express.json());
+
 const PORT = 3000;
 
 const pool = new Pool({
@@ -63,8 +65,56 @@ app.get("/customers/:customersId", function (req, res) {
 });
 
 // Add a new POST endpoint /customers to create a new customer with name, address, city and country.
+app.post("/customers", function (req, res) {
+  const newCustomerName = req.body.name;
+  const newCustomerAddress = req.body.address;
+  const newCustomerCity = req.body.city;
+  const newCustomerCountry = req.body.country;
+
+  if (
+    !newCustomerName ||
+    !newCustomerAddress ||
+    !newCustomerCity ||
+    !newCustomerCountry
+  ) {
+    return res.status(400).send("Please provide all information required.");
+  }
+
+  pool
+    .query("SELECT * FROM customers WHERE name=$1", [newCustomerName])
+    .then((result) => {
+      if (result.rows.length > 0) {
+        return res
+          .status(400)
+          .send("A customer with the same name already exists!");
+      } else {
+        const query =
+          "INSERT INTO customers (name, address, city, country) VALUES ($1, $2, $3, $4)";
+        pool
+          .query(query, [
+            newCustomerName,
+            newCustomerAddress,
+            newCustomerCity,
+            newCustomerCountry,
+          ])
+          .then(() => res.send("Customer created!"))
+          .catch((error) => {
+            console.error(error);
+            res.status(500).json(error);
+          });
+      }
+    });
+});
 
 // Add a new POST endpoint /products to create a new product.
+app.post("/products", function (req, res) {
+  const newProductName = req.body.name;
+
+  if (!newProductName) {
+    return res.status(400).send("Please provide all information required.");
+  }
+  //NOT FINISHED
+});
 
 // Add a new POST endpoint /availability to create a new product availability (with a price and a supplier id). Check that the price is a positive integer and that both the product and supplier ID's exist in the database, otherwise return an error.
 
