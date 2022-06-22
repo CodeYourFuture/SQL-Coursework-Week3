@@ -127,23 +127,37 @@ app.post('/customers', (req, res) => {
 
 app.put('/customers/:customerId', (req, res) => {
   const customerId = req.params.customerId
-  const { name, address, city, country } = req.body
-  const queryCheck = `SELECT * FROM customers WHERE id = $1`
-  const queryString = `UPDATE customers set name = $1, address = $2, city = $3, country = $4 
-                        WHERE id = $5`
-  pool
-    .query(queryCheck, [customerId])
-    .then((result) => {
-      if (result.rows.length == 0)
-        res.status(400).send(`Customer with the id doesn't exists!`)
-      else {
+
+  const insideParams = []
+  const params = [customerId]
+
+  Object.keys(req.body).map((param, index) => {
+    insideParams.push(`${param} = $${index + 2}`)
+    params.push(req.body[param])
+  })
+  const selectQuery = `SELECT * FROM customers WHERE id = $1`
+  const updateQuery = `Update customers set ${insideParams.join(',')} where id = $1`
+
+  pool.query(selectQuery, [customerId]).then((result) => {
+    if (result.rows == 0) res.status(400).send("Customer doesn't exist!")
+    else {
+      if (
+        req.body.hasOwnProperty('email') &&
+        (!req.body['email'].includes('@') || !req.body['email'].includes('.'))
+      )
+        res.status(400).send('The email address is not valid!')
+      else
         pool
-          .query(queryString, [name, address, city, country, customerId])
-          .then(() => res.status(200).send(`Customer has been updated!`))
-          .catch((error) => res.status(500).json(error))
-      }
-    })
-    .catch((error) => res.status(500).json(error))
+          .query(updateQuery, params)
+          .then(() =>
+            res.status(200).send(`Customer ${customerId} has been updated!`),
+          )
+          .catch((error) => {
+            console.log(error)
+            res.status(500).json(error)
+          })
+    }
+  })
 })
 
 app.delete('/customers/:customerId', (req, res) => {
@@ -217,5 +231,3 @@ app.post('/customers/:customerId/orders', (req, res) => {
     })
     .catch((error) => res.status(500).json(error))
 })
-
-
