@@ -5,7 +5,6 @@ const pool = require("../../pool");
 // Customers
 // Gets all the customers
 router.get("/", (req, res) => {
-  console.log("Hello");
   pool
     .query("SELECT * FROM customers")
     .then((result) => res.send(result.rows))
