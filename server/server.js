@@ -34,6 +34,7 @@ async function connect(client) {
 }
 
 connect(client);
+
 const pool = new Pool({
   user: "oqmvbphg",
   host: "tyke.db.elephantsql.com",
@@ -136,7 +137,8 @@ app.put("/customers/:customerId", (req, res) => {
   const city = req.body.city;
   const country = req.body.country;
 
-  const query = "UPDATE customers SET   name = $2, address = $3, city=$4, country= $5 WHERE id =$1 ";
+  const query =
+    "UPDATE customers SET   name = $2, address = $3, city=$4, country= $5 WHERE id =$1 ";
 
   return pool
     .query(query, [customerId, name, address, city, country])
