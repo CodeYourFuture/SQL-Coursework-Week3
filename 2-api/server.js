@@ -1,6 +1,7 @@
 const express = require("express");
 const app = express();
 const { Pool } = require("pg");
+const { resourceLimits } = require("worker_threads");
 
 app.use(express.json());
 
@@ -113,12 +114,85 @@ app.post("/products", function (req, res) {
   if (!newProductName) {
     return res.status(400).send("Please provide all information required.");
   }
-  //NOT FINISHED
+
+  pool
+    .query("SELECT * FROM products WHERE product_name=$1", [newProductName])
+    .then((result) => {
+      if (result.rows.length > 0) {
+        return res
+          .status(400)
+          .send("A product with the same name already exists!");
+      } else {
+        const query = "INSERT INTO products (product_name) VALUES ($1)";
+        pool
+          .query(query, [newProductName])
+          .then(() => res.send("Product created!"))
+          .catch((error) => {
+            console.error(error);
+            res.status(500).json(error);
+          });
+      }
+    });
 });
 
 // Add a new POST endpoint /availability to create a new product availability (with a price and a supplier id). Check that the price is a positive integer and that both the product and supplier ID's exist in the database, otherwise return an error.
+app.post("/availability", function (req, res) {
+  const newProductAvailabilityId = parseInt(req.body.prod_id);
+  const newSupplierId = parseInt(req.body.supp_id);
+  const newUnitPrice = parseInt(req.body.unit_price);
+
+  if (newUnitPrice < 0) {
+    return res.status(400).send("Please provide a valid number.");
+  }
+
+  pool
+    .query(
+      "SELECT * FROM product_availability WHERE prod_id=$1 AND supp_id=$2",
+      [newProductAvailabilityId, newSupplierId]
+    )
+    .then((result) => {
+      if (result.rows.length > 0) {
+        return res
+          .status(400)
+          .send("A product with the same name and price already exists!");
+      } else {
+        const query =
+          "INSERT INTO product_availability (prod_id, supp_id, unit_price) VALUES ($1, $2, $3)";
+        pool
+          .query(query, [newProductAvailabilityId, newSupplierId, newUnitPrice])
+          .then(() => res.send("Product created!"))
+          .catch((error) => {
+            console.error(error);
+            res.status(500).json(error);
+          });
+      }
+    });
+});
 
 // Add a new POST endpoint /customers/:customerId/orders to create a new order (including an order date, and an order reference) for a customer. Check that the customerId corresponds to an existing customer or return an error.
+app.post("/customers/:customerId/order", function (req, res) {
+  const newOrderCustomerId = parseInt(req.params.customerId);
+  const newOrderDate = req.body.order_date;
+  const newOrderReference = req.body.order_reference;
+
+  pool
+    .query("SELECT * FROM customers WHERE id=$1", [newOrderCustomerId])
+    .then((result) => {
+      if (!result.rows.length > 0) {
+        return res.status(400).send("This customer does not exist");
+      } else {
+        const query =
+          "INSERT INTO orders (order_date, order_reference, customer_id) VALUES ($1, $2, $3)";
+        pool
+          .query(query, [newOrderDate, newOrderReference, newOrderCustomerId])
+          .then(() => res.send("Order created!"))
+          .catch((error) => {
+            console.error(error);
+            res.status(500).json(error);
+          });
+      }
+    });
+});
 
 // Add a new PUT endpoint /customers/:customerId to update an existing customer (name, address, city and country).
 
@@ -128,6 +202,7 @@ app.post("/products", function (req, res) {
 
 // Add a new GET endpoint /customers/:customerId/orders to load all the orders along with the items in the orders of a specific customer. Especially, the following information should be returned: order references, order dates, product names, unit prices, suppliers and quantities.
 
-app.listen(PORT, () => {
-  console.log(`Hello my service is running on port ${PORT}`);
-});
+.app
+  .listen(PORT, () => {
+    console.log(`Hello my service is running on port ${PORT}`);
+  });
