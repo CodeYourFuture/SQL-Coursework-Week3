@@ -195,14 +195,102 @@ app.post("/customers/:customerId/order", function (req, res) {
 });
 
 // Add a new PUT endpoint /customers/:customerId to update an existing customer (name, address, city and country).
+app.put("/customers/:customerId", function (req, res) {
+  const customerId = parseInt(req.params.customerId);
+  const newCustomerName = req.body.name;
+  const newCustomerAddress = req.body.address;
+  const newCustomerCity = req.body.city;
+  const newCustomerCountry = req.body.country;
+
+  if (
+    !newCustomerName ||
+    !newCustomerAddress ||
+    !newCustomerCity ||
+    !newCustomerCountry
+  ) {
+    return res.status(400).send("Please provide all information required.");
+  }
+
+  pool
+    .query("SELECT * FROM customers WHERE id=$1", [customerId])
+    .then((result) => {
+      if (!result.rows.length > 0) {
+        return res.status(400).send("This customer does not exist");
+      } else {
+        const query =
+          "UPDATE customers SET name = $1, address = $2, city = $3, country = $4 WHERE id = $5";
+        pool
+          .query(query, [
+            newCustomerName,
+            newCustomerAddress,
+            newCustomerCity,
+            newCustomerCountry,
+            customerId,
+          ])
+          .then(() => res.send("Customer updated!"))
+          .catch((error) => {
+            console.error(error);
+            res.status(500).json(error);
+          });
+      }
+    });
+});
 
 // Add a new DELETE endpoint /orders/:orderId to delete an existing order along with all the associated order items.
+app.delete("/orders/:orderId", function (req, res) {
+  let orderId = parseInt(req.params.orderId);
+
+  pool
+    .query("DELETE FROM order_items WHERE order_id =$1", [orderId])
+    .then(() => pool.query("DELETE FROM orders WHERE id=$1", [orderId]))
+    .then(() => res.send(`Order ${orderId} and order items deleted!`))
+    .catch((error) => {
+      console.error(error);
+      res.status(500).json(error);
+    });
+});
 
 // Add a new DELETE endpoint /customers/:customerId to delete an existing customer only if this customer doesn't have orders.
+app.delete("/customers/:customerId", function (req, res) {
+  let customerId = parseInt(req.params.customerId);
+
+  pool
+    .query("SELECT * from orders where customer_id=$1", [customerId])
+    .then((result) => {
+      if (result.rows.length > 0) {
+        return res.status(400).send("This customer has existing orders");
+      } else {
+        const query = "DELETE FROM customers WHERE id =$1";
+        pool
+          .query(query, [customerId])
+          .then(() =>
+            pool.query("DELETE FROM customers WHERE id=$1", [customerId])
+          )
+          .then(() => res.send(`Customer ${customerId} deleted!`))
+          .catch((error) => {
+            console.error(error);
+            res.status(500).json(error);
+          });
+      }
+    });
+});
 
 // Add a new GET endpoint /customers/:customerId/orders to load all the orders along with the items in the orders of a specific customer. Especially, the following information should be returned: order references, order dates, product names, unit prices, suppliers and quantities.
+app.get("/customers/:customerId/orders", function (req, res) {
+  let customerId = parseInt(req.params.customerId);
 
-.app
-  .listen(PORT, () => {
-    console.log(`Hello my service is running on port ${PORT}`);
-  });
+  pool
+    .query(
+      "select orders.id as order_id, orders.order_reference, orders.order_date, products.product_name, product_availability.unit_price, suppliers.supplier_name, order_items.quantity from orders inner join order_items on orders.id = order_items.order_id inner join product_availability on order_items.product_id = product_availability.prod_id inner join products on products.id = product_availability.prod_id inner join suppliers on suppliers.id = product_availability.prod_id where orders.customer_id = $1;",
+      [customerId]
+    )
+    .then((result) => res.json(result.rows))
+    .catch((error) => {
+      console.log(error);
+      res.status(500).json(error);
+    });
+});
+
+app.listen(PORT, () => {
+  console.log(`Hello my service is running on port ${PORT}`);
+});

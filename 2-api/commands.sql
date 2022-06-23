@@ -96,3 +96,12 @@ order by order_total_amount DESC;
 -- select products.product_name, product_availability.unit_price, suppliers.supplier_name from products
 -- inner join product_availability on products.id = product_availability.prod_id
 -- inner join suppliers on suppliers.id = product_availability.supp_id;
+
+
+-- orders along with the items in the orders of a specific customer. Especially, the following information should be returned: order references, order dates, product names, unit prices, suppliers and quantities.
+select orders.id as order_id, orders.order_reference, orders.order_date, products.product_name, product_availability.unit_price, suppliers.supplier_name, order_items.quantity from orders
+inner join order_items on orders.id = order_items.order_id
+inner join product_availability on order_items.product_id = product_availability.prod_id
+inner join products on products.id = product_availability.prod_id
+inner join suppliers on suppliers.id = product_availability.prod_id
+where orders.customer_id = 1;
