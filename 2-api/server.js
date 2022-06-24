@@ -228,11 +228,8 @@ const setQuery = "name= $1, address= $2, city= $3, country=$4";
 
    let query =
      "SELECT orders.id,order_date,order_reference,unit_price,quantity,product_name,supplier_name FROM "
-
      "orders INNER JOIN order_items ON order_items.order_id=orders.id INNER JOIN product_availability ON "
-
      "order_items.product_id=product_availability.prod_id AND order_items.supplier_id=product_availability.supp_id "
-
      "INNER JOIN products ON product_availability.prod_id=products.id INNER JOIN suppliers ON product_availability.supp_id=suppliers.id WHERE orders.customer_id=$1"
    pool
      .query(query, [customerId])
