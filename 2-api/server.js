@@ -51,6 +51,28 @@ app.post("/customers", (req,res)=>{
     .catch((err)=> res.json(err));
 })
 
+app.put("/customers/:customerId", (req, res) => {
+    const {customerId} = req.params;
+  const { name, address, city, country } = req.body;
+  const queryString = `update customers set name = $1, address=$2, city=$3, country=$4 where id = $5`;
+
+  pool
+    .query(queryString, [name, address, city, country, customerId])
+    .then(() => res.status(200).send("Customer updates!!!"))
+    .catch((err) => res.json(err));
+});
+
+app.delete("/customers/:customerId", (req, res) => {
+  const { customerId } = req.params;
+  const queryString = `delete from customers where id = $1`;
+
+  pool
+    .query(queryString, [customerId])
+    .then(() => res.status(200).send("Customer deleted!!!"))
+    .catch((err) => res.json(err));
+});
+
+
 app.listen(4005, function () {
   console.log("Server is listenening on port 4005, Ready to accept requests!");
 });
