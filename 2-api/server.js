@@ -5,6 +5,8 @@ const { Pool } = require("pg");
 
 app.use(express.json());
 
+header('Content-Type: application/json');
+
 // DATABASE
 const pool = new Pool({
   user: process.env.SQL_USERNAME,
@@ -60,7 +62,7 @@ app.get("/customers/:customerId", (req, res) => {
     });
 });
 
-// 4 Add a new POST endpoint `/customers` to create a new customer with name, address, city and country.
+// 4 
 // changed the Headers (Content-Type : application/json)
 app.post("/customers", (req, res) => {
   const newCustomerName = req.body.name;
@@ -97,7 +99,7 @@ app.post("/customers", (req, res) => {
     });
 });
 
-// 5 Add a new POST endpoint `/products` to create a new product
+// 5
 app.post("/products", function (req, res) {
   const newProductName = req.body.product_name;
 
@@ -121,7 +123,7 @@ app.post("/products", function (req, res) {
     });
 });
 
-// ** 6 Add a new POST endpoint `/availability` to create a new product availability (with a price and a supplier id). Check that the price is a positive integer and that both the product and supplier ID's exist in the database, otherwise return an error.
+// 6 
 app.post("/availability", function (req, res) {
   const newProductAvailabilityId = parseInt(req.body.prod_id);
   const newSupplierId = parseInt(req.body.supp_id);
@@ -155,7 +157,33 @@ app.post("/availability", function (req, res) {
     });
 });
 
-// Add a new PUT endpoint `/customers/:customerId` to update an existing customer (name, address, city and country).
+// 7
+app.post("/customers/:customerId/order", (req, res) => {
+  const newOrderCustomerId = Number(req.params.customerId);
+  const newOrderDate = req.body.order_date;
+  const newOrderReference = req.body.order_reference;
+
+  pool
+    .query("SELECT * FROM customers WHERE id=$1", [newOrderCustomerId])
+    .then((result) => {
+      if (!result.rows.length > 0) {
+        return res.status(400).send("This customer does not exist");
+      } else {
+        const query =
+          "INSERT INTO orders (order_date, order_reference, customer_id) VALUES ($1, $2, $3)";
+        pool
+          .query(query, [newOrderDate, newOrderReference, newOrderCustomerId])
+          .then(() => res.send("Order created!"))
+          .catch((error) => {
+            console.error(error);
+            res.status(500).json(error);
+          });
+      }
+    });
+});
+
+// 8
+// Content-Type:application/json
 app.put("/customers/:customerId", (req, res) => {
   const customerId = Number(req.params.customerId);
   const newCustomerName = req.body.name;
@@ -179,6 +207,61 @@ app.put("/customers/:customerId", (req, res) => {
       ]
     )
     .then(() => res.json(`Customer ${customerId} updated!`))
+    .catch((error) => {
+      console.log(error);
+      res.status(500).json(error);
+    });
+});
+
+// 9
+app.delete("/orders/:orderId", function (req, res) {
+  let orderId = parseInt(req.params.orderId);
+
+  pool
+    .query("DELETE FROM order_items WHERE order_id =$1", [orderId])
+    .then(() => pool.query("DELETE FROM orders WHERE id=$1", [orderId]))
+    .then(() => res.send(`Order ${orderId} and order items deleted!`))
+    .catch((error) => {
+      console.error(error);
+      res.status(500).json(error);
+    });
+});
+
+// 10
+app.delete("/customers/:customerId", function (req, res) {
+  let customerId = parseInt(req.params.customerId);
+
+  pool
+    .query("SELECT * from orders where customer_id=$1", [customerId])
+    .then((result) => {
+      if (result.rows.length > 0) {
+        return res.status(400).send("This customer has existing orders");
+      } else {
+        const query = "DELETE FROM customers WHERE id =$1";
+        pool
+          .query(query, [customerId])
+          .then(() =>
+            pool.query("DELETE FROM customers WHERE id=$1", [customerId])
+          )
+          .then(() => res.send(`Customer ${customerId} deleted!`))
+          .catch((error) => {
+            console.error(error);
+            res.status(500).json(error);
+          });
+      }
+    });
+});
+
+// 11
+app.get("/customers/:customerId/orders", function (req, res) {
+  let customerId = parseInt(req.params.customerId);
+
+  pool
+    .query(
+      "select orders.id as order_id, orders.order_reference, orders.order_date, products.product_name, product_availability.unit_price, suppliers.supplier_name, order_items.quantity from orders inner join order_items on orders.id = order_items.order_id inner join product_availability on order_items.product_id = product_availability.prod_id inner join products on products.id = product_availability.prod_id inner join suppliers on suppliers.id = product_availability.prod_id where orders.customer_id = $1;",
+      [customerId]
+    )
+    .then((result) => res.json(result.rows))
     .catch((error) => {
       console.log(error);
       res.status(500).json(error);
