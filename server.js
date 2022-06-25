@@ -28,7 +28,6 @@ const pool = new Pool({
 // heroku pg:psql -a cyf-ecommerce -f ~/Downloads/cyf_ecommerce.sql
 //get product
 
-
 //psql -h ec2-18-204-142-254.compute-1.amazonaws.com -p 5432 -U vzkfqqxnqszqez -W dfhftjpc14voga
 // provide password when prompted
 app.get("/products", (req, res) => {
@@ -256,6 +255,6 @@ app.get("/customers/:customerId/orders", (req, res) => {
 });
 
 const port = process.env.port || 3000;
-app.listen(port, () => {
-  console.log(`server is listening on port ${port},ready accept requests!`);
+app.listen(3000, () => {
+  console.log(`server is listening on port 3000,ready accept requests!`);
 });
