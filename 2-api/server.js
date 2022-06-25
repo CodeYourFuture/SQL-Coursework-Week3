@@ -5,13 +5,24 @@ const { Pool } = require("pg");
 const app = express();
 app.use(express.json());
 
+// const pool = new Pool({
+//   user: "saman",
+//   host: "localhost",
+//   database: "cyf_ecommerce",
+//   password: "1234",
+//   port: 5432,
+// });
+
 const pool = new Pool({
-  user: "saman",
-  host: "localhost",
-  database: "cyf_ecommerce",
-  password: "1234",
-  port: 5432,
-});
+  connectionString: process.env.DATABASE_URL,
+  // ssl: {
+  //   rejectUnauthorized: false,
+  // },
+}); 
+
+
+
+// psql -h <HOST> -p <PORT> -U <USERNAME> -W <DB>
 
 app.get("/products", (req,res)=>{
     const name = req.query.name;
@@ -73,6 +84,8 @@ app.delete("/customers/:customerId", (req, res) => {
 });
 
 
-app.listen(4005, function () {
-  console.log("Server is listenening on port 4005, Ready to accept requests!");
+const port = process.env.port || 9999;
+app.listen(port, function () {
+  console.log(`Server is listening on port ${port}. Ready to accept requests!`);
 });
+
