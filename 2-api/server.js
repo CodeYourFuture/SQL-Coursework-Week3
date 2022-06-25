@@ -6,22 +6,35 @@ const app = express();
 app.use(express.json());
 
 const pool = new Pool({
-  user: "postgres",
-  host: "localhost",
-  database: "cyf_ecommerce",
-  password: "",
-  port: 5432,
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false,
+  },
 });
+//export DATABASE_URL=postgres://postgres:@localhost:5432/cyf_ecommerce?sslmode=disable
+//export port=9999
 
+// const pool = new Pool({
+//   user: "postgres",
+//   host: "localhost",
+//   database: "cyf_ecommerce",
+//   password: "",
+//   port: 5432,
+// });
+//\i ~/Downloads/cyf_hotels_exercise5.sql
+
+// heroku pg:psql -a cyf-ecommerce -f ~/Downloads/cyf_ecommerce.sql
 //get product
+
+
+//psql -h ec2-18-204-142-254.compute-1.amazonaws.com -p 5432 -U vzkfqqxnqszqez -W dfhftjpc14voga
+// provide password when prompted
 app.get("/products", (req, res) => {
   const productName = req.query.productName;
 
-  let query;
+  let query = `SELECT unit_price,supplier_name,product_name FROM products INNER JOIN product_availability as pa ON products.id= pa.prod_id INNER JOIN suppliers ON suppliers.id=pa.supp_id`;
   if (productName) {
-    query = `SELECT unit_price,supplier_name,product_name FROM products INNER JOIN product_availability as pa ON products.id= pa.prod_id INNER JOIN suppliers ON suppliers.id=pa.supp_id WHERE products.product_name LIKE '%${productName}%'`;
-  } else {
-    query = `SELECT unit_price,supplier_name,product_name FROM products INNER JOIN product_availability as pa ON products.id= pa.prod_id INNER JOIN suppliers ON suppliers.id=pa.supp_id`;
+    query += ` WHERE products.product_name LIKE '%${productName}%'`;
   }
   pool
     .query(query)
@@ -239,6 +252,8 @@ app.get("/customers/:customerId/orders", (req, res) => {
       res.status(500).send(err);
     });
 });
-const port = 3000;
 
-app.listen(port, () => console.log(`Example app listening on port ${port}!`));
+const port = process.env.port || 3000;
+app.listen(port, () => {
+  console.log(`server is listening on port ${port},ready accept requests!`);
+});
