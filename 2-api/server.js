@@ -24,20 +24,22 @@ const pool = new Pool({
 
 // psql -h <HOST> -p <PORT> -U <USERNAME> -W <DB>
 
-app.get("/products", (req,res)=>{
-    const name = req.query.name;
-    let where = "";
-    if(name) where = `where product_name ilike '%${name}%'`;
-    
-    const queryString=`select product_name, supplier_name, unit_price 
+
+app.get("/", (req, res) => {
+  const name = req.query.name;
+  let where = "";
+  if (name) where = `where product_name ilike '%${name}%'`;
+
+  const queryString = `select product_name, supplier_name, unit_price 
     from products 
     inner join product_availability on prod_id= products.id
-    inner join suppliers on suppliers.id = supp_id ${where}`
-    pool
-    .query( queryString)
-    .then((result)=> res.json(result.rows))
-    .catch((err)=> res.json(err))
-})
+    inner join suppliers on suppliers.id = supp_id ${where}`;
+  pool
+    .query(queryString)
+    .then((result) => res.json(result.rows))
+    .catch((err) => res.json(err));
+});
+
 
 
 app.get("/customers/:customerId", (req,res)=>{
