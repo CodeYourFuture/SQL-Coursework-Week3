@@ -21,8 +21,10 @@ const pool = new Pool({
 //   password: "",
 //   port: 5432,
 // });
-//\i ~/Downloads/cyf_hotels_exercise5.sql
+//this piece of code is from here
+//\i ~/Downloads/cyf_ecommerce.sql
 
+//this pisece of code from terminal
 // heroku pg:psql -a cyf-ecommerce -f ~/Downloads/cyf_ecommerce.sql
 //get product
 
