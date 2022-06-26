@@ -1,15 +1,15 @@
 const express = require('express')
+const { Pool } = require('pg')
 const app = express()
 
-const { Pool } = require('pg')
+app.use(express.json())
+
 const pool = new Pool({
-  connectionString: DATABASE_URL,
+  connectionString: process.env.DATABASE_URL,
   ssl: {
     rejectUnauthorized: false
   }
 })
-
-app.use(express.json())
 
 const port = process.env.PORT || 5000
 
