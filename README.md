@@ -12,3 +12,6 @@ To use Heroku as node.js server and save postgresql data on it when the server i
 - Heroku/Settings/Buildpacks/Add buildpack add node.js
 - Heroku/Resources/Add-ons add Heroku Postgres
 - select GitHub in Deploy menu of Heroku and select repo to deploy.
+
+Example: 
+https://github.com/DavoodKhoshnood/SQL-Coursework-Week3/blob/main/package.json
