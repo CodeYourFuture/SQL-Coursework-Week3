@@ -1,10 +1,10 @@
 # SQL Week 3 - Coursework
-To use Heroku as node.js server and save postgresql data on it:
+To use Heroku as node.js server and save postgresql data on it when the server is inside of a sub-directory:
 - Copy package.json to root and change : 
  ```
  "scripts": {
-    "start": "node server/server.js",
-    "dev": "nodemon server/server.js"
+    "start": "node <sub-directory>/server.js",
+    "dev": "nodemon <sub-directory>/server.js"
   },
  ```
 - Create a new app on Heroku
