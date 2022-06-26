@@ -1,4 +1,5 @@
 # SQL Week 3 - Coursework
+## Deploy a GitHub repo includes a server directory on Heroku
 To use Heroku as node.js server and save postgresql data on it when the server is inside of a sub-directory:
 - Copy package.json to root and change : 
  ```
