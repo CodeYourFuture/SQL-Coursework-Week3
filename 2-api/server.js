@@ -86,6 +86,7 @@ app.delete("/customers/:customerId", (req, res) => {
 });
 
 
+
 const port = process.env.PORT || 9999;
 app.listen(port, function () {
   console.log(`Server is listening on port ${port}. Ready to accept requests!`);
