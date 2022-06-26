@@ -3,16 +3,15 @@ const app = express()
 
 const { Pool } = require('pg')
 const pool = new Pool({
-  database: 'cyf_ecommerce',
-  user: 'user',
-  password: '0o9i8u7y',
-  host: 'localhost',
-  port: 5432,
+  connectionString: DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false
+  }
 })
 
 app.use(express.json())
 
-const port = process.env.port || 5000
+const port = process.env.PORT || 5000
 
 app.listen(port, () => console.log(`Server is listening to port ${port}`))
 
