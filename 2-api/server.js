@@ -5,17 +5,11 @@ const {Pool} = require('pg');
 const port = process.env.PORT || 3000;
 app.use(express.json());
 
-const pool = new Pool({ 
-   // give your username
-   user: 'mahri',
-   host: 'localhost', 
-   // change the database name accordingly
-   database: 'cyf_ecommerce',
-   password: 'Hatyja-09',
-   // Port number
-   port: 5432
- })
+const dotenv = require('dotenv');
+dotenv.config();
 
+
+const pool = new Pool(process.env.dbPG)
 
 //customer GET ALL
 
