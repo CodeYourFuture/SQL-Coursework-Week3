@@ -16,6 +16,7 @@ In the following homework, you will create new API endpoints in the NodeJS appli
 
 - Add a new GET endpoint `/customers/:customerId` to load a single customer by ID.
 
+
 - Add a new POST endpoint `/customers` to create a new customer with name, address, city and country.
 
 - Add a new POST endpoint `/products` to create a new product.
