@@ -1,7 +1,7 @@
 require("dotenv").config();
-console.log(process.env);
 const { Pool } = require("pg");
 const express = require("express");
+const { query } = require("express");
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -21,7 +21,7 @@ const pool = new Pool({
 
 app.get("/", (req, res) => {
     res.json({
-        "List of endpoints": ["/customers", "/suppliers", "/products"]
+        "List of endpoints": ["/customers", "/customers/:customerId", "/suppliers", "/products"]
     })
 })
 
@@ -55,12 +55,19 @@ app.get("/suppliers", (req, res) => {
 })
 
 app.get("/products", (req, res) => {
+    const searchName = req.query.product_name;
+    let query = `
+    SELECT p.product_name, pa.unit_price, s.supplier_name FROM product_availability pa
+    INNER JOIN products p ON p.id = pa.prod_id
+    INNER JOIN suppliers s ON s.id = pa.supp_id`;
 
+    let params = [];
+    if(searchName) {
+        query += "WHERE p.product_name LIKE $1";
+        params.push(`%${searchName}%`);
+    }
 
-
-    pool.query(`SELECT p.product_name, pa.unit_price, s.supplier_name FROM product_availability pa
-                INNER JOIN products p ON p.id = pa.prod_id
-                INNER JOIN suppliers s ON s.id = pa.supp_id`)
+    pool.query(query, params)
         .then(result => res.json(result.rows))
         .catch(err => {
             console.error(err);
