@@ -3,6 +3,8 @@ const app = express();
 const port = process.env.PORT || 3001;
 const { Pool } = require("pg");
 
+app.use(express.json());
+
 const pool = new Pool({
   user: "riyaaz",
   host: "dpg-cefmi99gp3jk7mhomnhg-a.oregon-postgres.render.com",
@@ -64,6 +66,25 @@ app.get("/customers/:id", (req, res) => {
     .catch((error) => {
       console.error(error);
       res.status(400).json(error);
+    });
+}); // end of get customer by id
+
+// Create a new customer
+
+app.post("/customers", (req, res) => {
+  const newName = req.body.name;
+  const newAddress = req.body.address;
+  const newCity = req.body.city;
+  const newCountry = req.body.country;
+  const query =
+    "INSERT INTO customers (name, address, city, country) VALUES ($1, $2, $3, $4) RETURNING *;";
+  console.log(req.body);
+  pool
+    .query(query, [newName, newAddress, newCity, newCountry])
+    .then(() => res.send("Customer created!"))
+    .catch((error) => {
+      console.error(error);
+      res.status(500).json(error);
     });
 });
 
