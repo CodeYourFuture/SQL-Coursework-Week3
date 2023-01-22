@@ -67,10 +67,9 @@ app.get("/customers/:id", (req, res) => {
       console.error(error);
       res.status(400).json(error);
     });
-}); // end of get customer by id
+});
 
 // Create a new customer
-
 app.post("/customers", (req, res) => {
   const newName = req.body.name;
   const newAddress = req.body.address;
