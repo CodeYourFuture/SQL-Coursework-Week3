@@ -1,3 +1,4 @@
+const { query } = require("express");
 const express = require("express");
 const app = express();
 const port = process.env.PORT || 3001;
@@ -81,6 +82,20 @@ app.post("/customers", (req, res) => {
   pool
     .query(query, [newName, newAddress, newCity, newCountry])
     .then(() => res.send("Customer created!"))
+    .catch((error) => {
+      console.error(error);
+      res.status(500).json(error);
+    });
+});
+
+// create new product
+app.post("/products", (req, res) => {
+  const newProduct = req.body.product_name;
+  const query = "INSERT INTO PRODUCTS (product_name) VALUES ($1)";
+
+  pool
+    .query(query, [newProduct])
+    .then(() => res.send("Product created!"))
     .catch((error) => {
       console.error(error);
       res.status(500).json(error);
