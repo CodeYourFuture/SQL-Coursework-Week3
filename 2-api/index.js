@@ -104,7 +104,7 @@ app.post("/customers", (req, res) => {
 
 // 4
 app.post("/products", (req, res) => {
-  const product_name = req.body;
+  const {product_name} = req.body;
   const query =
     "INSERT INTO products(product_name) VALUES ($1)";
   pool
