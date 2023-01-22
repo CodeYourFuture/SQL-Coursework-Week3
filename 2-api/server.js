@@ -32,20 +32,7 @@ app.get("/suppliers", (req, res) => {
     });
 });
 
-// - (STRETCH GOAL) Add a new GET endpoint `/products` to return all the product names along with their prices
-//    and supplier names.
-
-// app.get("/products", (req, res) => {
-//   pool
-//     .query(
-//       "SELECT p.product_name, pa.unit_price, s.supplier_name from products p inner join product_availability pa on p.id = pa.prod_id inner join suppliers s on pa.supp_id = s.id"
-//     )
-//     .then((result) => res.json(result.rows))
-//     .catch((error) => {
-//       console.error(error);
-//       res.status(500).json(error);
-//     });
-// });
+// get all products or get a product by name.
 
 app.get("/products", (req, res) => {
   let query =
@@ -62,6 +49,21 @@ app.get("/products", (req, res) => {
     .catch((error) => {
       console.error(error);
       res.status(500).json(error);
+    });
+}); // End of get all products
+
+// Load customer by id
+
+app.get("/customers/:id", (req, res) => {
+  const customerId = req.params.id;
+  const query = "select * from customers where id = $1";
+
+  pool
+    .query(query, [customerId])
+    .then((result) => res.json(result.rows))
+    .catch((error) => {
+      console.error(error);
+      res.status(400).json(error);
     });
 });
 
