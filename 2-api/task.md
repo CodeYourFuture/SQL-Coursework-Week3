@@ -12,22 +12,22 @@ In the following homework, you will create new API endpoints in the NodeJS appli
 
 - If you don't have it already, add a new GET endpoint `/products` to load all the product names along with their prices and supplier names.
 
-- Update the previous GET endpoint `/products` to filter the list of products by name using a query parameter, for example `/products?name=Cup`. This endpoint should still work even if you don't use the `name` query parameter!
+1- Update the previous GET endpoint `/products` to filter the list of products by name using a query parameter, for example `/products?name=Cup`. This endpoint should still work even if you don't use the `name` query parameter!
 
-- Add a new GET endpoint `/customers/:customerId` to load a single customer by ID.
+2- Add a new GET endpoint `/customers/:customerId` to load a single customer by ID.
 
-- Add a new POST endpoint `/customers` to create a new customer with name, address, city and country.
+3- Add a new POST endpoint `/customers` to create a new customer with name, address, city and country.
 
-- Add a new POST endpoint `/products` to create a new product.
+4- Add a new POST endpoint `/products` to create a new product.
 
-- Add a new POST endpoint `/availability` to create a new product availability (with a price and a supplier id). Check that the price is a positive integer and that both the product and supplier ID's exist in the database, otherwise return an error.
+5- Add a new POST endpoint `/availability` to create a new product availability (with a price and a supplier id). Check that the price is a positive integer and that both the product and supplier ID's exist in the database, otherwise return an error.
 
-- Add a new POST endpoint `/customers/:customerId/orders` to create a new order (including an order date, and an order reference) for a customer. Check that the customerId corresponds to an existing customer or return an error.
+6- Add a new POST endpoint `/customers/:customerId/orders` to create a new order (including an order date, and an order reference) for a customer. Check that the customerId corresponds to an existing customer or return an error.
 
-- Add a new PUT endpoint `/customers/:customerId` to update an existing customer (name, address, city and country).
+7- Add a new PUT endpoint `/customers/:customerId` to update an existing customer (name, address, city and country).
 
-- Add a new DELETE endpoint `/orders/:orderId` to delete an existing order along with all the associated order items.
+8- Add a new DELETE endpoint `/orders/:orderId` to delete an existing order along with all the associated order items.
 
-- Add a new DELETE endpoint `/customers/:customerId` to delete an existing customer only if this customer doesn't have orders.
+9- Add a new DELETE endpoint `/customers/:customerId` to delete an existing customer only if this customer doesn't have orders.
 
-- Add a new GET endpoint `/customers/:customerId/orders` to load all the orders along with the items in the orders of a specific customer. Especially, the following information should be returned: order references, order dates, product names, unit prices, suppliers and quantities.
+10- Add a new GET endpoint `/customers/:customerId/orders` to load all the orders along with the items in the orders of a specific customer. Especially, the following information should be returned: order references, order dates, product names, unit prices, suppliers and quantities.
