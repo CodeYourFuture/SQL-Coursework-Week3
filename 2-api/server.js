@@ -133,23 +133,6 @@ app.post("/products", function (req, res) {
 });
 
 
-
-app.put("/customers/:customerId", function (req, res) {
-const customerId = req.params.customerId;
-const customerName = req.body.name;
-const customerAddress = req.body.address;
-const customerCity = req.body.city;
-const customerCountry = req.body.country;
-
-pool
-  .query("UPDATE customers SET name=$1, address=$2, city=$3, country=$4 WHERE id=$5", [customerName, customerAddress, customerCity, customerCountry, customerId])
-  .then(() => res.send(`Customer ${customerId} updated!`))
-  .catch((error) => {
-    console.error(error);
-    res.status(500).json(error);
-  });
-});
-
 app.listen(process.env.PORT || 3000, function() {
     console.log("Server is listening on port 3000. Ready to accept requests!");
 });
