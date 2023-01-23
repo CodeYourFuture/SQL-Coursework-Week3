@@ -58,6 +58,30 @@ app.get("/products", function (req, res) {
     });
 });
 
+app.get("/customers/:customerId", (req, res) => {
+  const { customerId } = req.params;
+  const queryString = `SELECT * FROM customers WHERE id = $1`;
+  pool
+    .query(queryString, [customerId])
+    .then((result) => {
+      console.log(result.rows);
+      res.json(result.rows);
+    })
+    .catch((err) => res.json(err));
+});
+
+app.post("/customers", (req, res) => {
+  const { id, name, address, city, country } = req.body;
+  const queryString = `INSERT INTO customers (name, address, city, country) VALUES ($1, $2, $3, $4)`;
+  pool
+    .query(queryString, [id, name, address, city, country])
+    .then((result) => {
+      console.log("Customer created successfully");
+      res.json({ message: "Customer created successfully" });
+    })
+    .catch((err) => res.json(err));
+});
+
 app.listen(3000, function () {
   console.log("Server is listening on port 3000. Ready to accept requests!");
 });
