@@ -62,6 +62,42 @@ app.get("/products", function (req, res) {
     });
 });
 
+// Add a new GET endpoint `/customers/:customerId` to load a single customer by ID.
+app.get("/customers/:customerId", function (req, res) {
+  const customerId = req.params.customerId;
+
+  pool
+    .query("SELECT * FROM customers WHERE customers.id=$1", [customerId])
+    .then((result) => res.json(result.rows))
+    .catch((error) => {
+      console.error(error);
+      res.status(500).json(error);
+    });
+});
+
+app.post("/customers", function (req, res) {
+  const newCustomerName = req.body.name;
+  const newCustomerAddress = req.body.address;
+  const newCustomerCity = req.body.city;
+  const newCustomerCountry = req.body.country;
+
+  const query =
+    "INSERT INTO customers (name, address, city, country) VALUES ($1, $2, $3, $4)";
+
+  pool
+    .query(query, [
+      newCustomerName,
+      newCustomerAddress,
+      newCustomerCity,
+      newCustomerCountry,
+    ])
+    .then(() => res.send("Customer created!"))
+    .catch((error) => {
+      console.error(error);
+      res.status(500).json(error);
+    });
+});
+
 app.listen(3000, function () {
   console.log("Server is listening on port 3000. Ready to accept requests!");
 });
