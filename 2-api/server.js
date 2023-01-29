@@ -1,3 +1,4 @@
+const { response } = require("express");
 const express = require("express");
 const app = express();
 const PORT = 3001;
@@ -17,21 +18,12 @@ const pool = new Pool({
   },
 });
 
-// app.get("/products", function (req, res) {
-//   pool
-//     .query(
-//       "select * from product_availability pa inner join products p on pa.prod_id = p.id inner join suppliers s on pa.prod_id = s.id "
-//     )
-//     .then((result) => res.json(result.rows))
-//     .catch((error) => {
-//       console.log(error);
-//       res.status(500).json(error);
-//     });
-// });
-
+// 1. GET endpoint /products
 app.get("/products", function (req, res) {
   pool
-    .query("select * from products")
+    .query(
+      "select * from product_availability pa inner join products p on pa.prod_id = p.id inner join suppliers s on pa.prod_id = s.id "
+    )
     .then((result) => res.json(result.rows))
     .catch((error) => {
       console.log(error);
@@ -39,6 +31,7 @@ app.get("/products", function (req, res) {
     });
 });
 
+// 3. GET endpoint /customers/:customerId
 app.get("/customers/:customerId", function (req, res) {
   let customerId = req.params.customerId;
   pool
@@ -50,15 +43,17 @@ app.get("/customers/:customerId", function (req, res) {
     });
 });
 
-app.get("/customers", function (req, res) {
-  pool
-    .query("Select * from customers")
-    .then((result) => res.json(result.rows))
-    .catch((error) => {
-      console.error(error);
-      res.status(500).json(error);
-    });
-});
+// app.get("/customers", function (req, res) {
+//   pool
+//     .query("Select * from customers")
+//     .then((result) => res.json(result.rows))
+//     .catch((error) => {
+//       console.error(error);
+//       res.status(500).json(error);
+//     });
+// });
+
+// 4.  POST endpoint /customers
 
 app.post("/customers", function (req, res) {
   const newCustomerName = req.body.name;
@@ -83,6 +78,8 @@ app.post("/customers", function (req, res) {
     });
 });
 
+// 5.  POST endpoint /products
+
 app.post("/products", function (req, res) {
   const newProductName = req.body.product_name;
   const query = "INSERT INTO products (product_name) VALUES ($1)";
@@ -95,6 +92,8 @@ app.post("/products", function (req, res) {
       res.status(500).send(error);
     });
 });
+
+// 6. POST endpoint /availability
 
 // app.post("/availability", function (req, res) {
 //   const newProdId = req.body.prod_id;
@@ -120,6 +119,8 @@ app.post("/products", function (req, res) {
 
 // - Add a new PUT endpoint `/customers/:customerId` to update an existing customer (name, address, city and country).
 
+//8. POST endpoint /customers/:customerId/orders
+
 app.put("/customers/:customerId", function (req, res) {
   const customerId = req.params.customerId;
   const newName = req.body.name;
@@ -139,7 +140,7 @@ app.put("/customers/:customerId", function (req, res) {
     });
 });
 
-//- Add a new DELETE endpoint `/orders/:orderId` to delete an existing order along with all the associated order items
+//9. DELETE endpoint /customers/:customerId
 
 app.delete("/orders/:orderId", function (req, res) {
   const orderId = req.params.orderId;
@@ -147,8 +148,27 @@ app.delete("/orders/:orderId", function (req, res) {
   pool
     .query("DELETE FROM order_items WHERE order_id = $1", [orderId])
     .then(() => pool.query("DELETE FROM orders WHERE id=$1", [orderId]))
+    .then(() => res.send(`Order ${orderId} has been deleted`))
     .catch((error) => {
       console.error(error);
+      res.status(500).json(error);
+    });
+});
+
+// 10. GET endpoint /customers/:customerId/order
+
+app.get("/customers/:customerId/orders", function (req, res) {
+  const customerId = req.params.customerId;
+  // const orderId = req.params.orderId;
+
+  const query =
+    "SELECT customers.name, orders.order_reference, orders.order_date, products.product_name, product_availability.unit_price, suppliers.supplier_name, order_item.quantity FROM customers INNER JOIN orders on customers.id = orders.customer_id INNER JOIN order_items ON order_items.order_id = orders.id INNER JOIN product_availability ON order_items.product_id = products.id INNER JOIN suppliers ON order_items.supplier_id = suppliers.id INNER JOIN products ON products.id = order_items.product_id WHERE customer.id=$1";
+
+  pool
+    .query(query, [customerId])
+    .then((result) => res.json(result.rows))
+    .catch((error) => {
+      console.log(error);
       res.status(500).json(error);
     });
 });
