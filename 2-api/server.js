@@ -8,11 +8,13 @@ const port = process.env.PORT || 5000;
 app.listen(port, () => console.log(`Listening on port ${port}`));
 
 const pool = new Pool({
-// Because I can only deply one database in the cloud (Render), 
-//That is why I merged with another project and added all the table of cyf_ecommerce.sql
-  connectionString:
-    `postgres://kawa:${process.env.DB_PASSWORD}@dpg-cfbi33pgp3jsh6aqrnag-a.oregon-postgres.render.com/videosproject_kawa_cyf`,
-  ssl: { rejectUnauthorized: false }
+  // Because I can only deply one database in the cloud (Render),
+  //That is why I merged with another project and added all the table of cyf_ecommerce.sql
+  // connectionString: `postgres://kawa:${process.env.DB_PASSWORD}@dpg-cfbi33pgp3jsh6aqrnag-a.oregon-postgres.render.com/videosproject_kawa_cyf`,
+  // ssl: { rejectUnauthorized: false },
+
+  connectionString: `postgres://kawa:xea5cgoHN7vSXkLYgi1pV60RwVRdJIQK@dpg-cfbi33pgp3jsh6aqrnag-a.oregon-postgres.render.com/videosproject_kawa_cyf`,
+  ssl: { rejectUnauthorized: false },
 });
 
 pool.connect((err) => {
@@ -24,8 +26,19 @@ pool.connect((err) => {
 });
 
 app.get("/products", (req, res) => {
-  const query =
-    "SELECT product_name, unit_price, supplier_name    FROM products JOIN product_availability ON products.id = product_availability.prod_id  JOIN suppliers ON product_availability.supp_id = suppliers.id;";
+  let query="";
+  console.log(!req.query.name)
+  if (!req.query.name){
+    query =
+    "SELECT product_name, unit_price, supplier_name    FROM products  JOIN product_availability ON products.id = product_availability.prod_id  JOIN suppliers ON product_availability.supp_id = suppliers.id";
+    
+  }
+  else{
+
+    query =
+    "SELECT product_name, unit_price, supplier_name    FROM products  JOIN product_availability ON products.id = product_availability.prod_id  JOIN suppliers ON product_availability.supp_id = suppliers.id WHERE LOWER(product_name) LIKE " + "'%"+req.query.name+"%'"  ;
+    console.log(query)
+  }
 
   pool
     .query(query)
@@ -52,5 +65,3 @@ app.get("/products", (req, res) => {
 //       res.status(400).json(error);
 //     });
 // });
-
-
