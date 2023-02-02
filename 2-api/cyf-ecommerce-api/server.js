@@ -38,9 +38,15 @@ app.get("/suppliers", async function (req, res) {
 // Get all products
 app.get("/products", async function (req, res) {
   try {
-    let result = await pool.query(
-      "SELECT p.product_name , pa.unit_price , s.supplier_name FROM products p INNER JOIN product_availability pa ON (p.id = pa.prod_id) INNER JOIN suppliers s ON (s.id = pa.supp_id)"
-    );
+    let query =
+      "SELECT p.product_name , pa.unit_price , s.supplier_name FROM products p INNER JOIN product_availability pa ON (p.id = pa.prod_id) INNER JOIN suppliers s ON (s.id = pa.supp_id)";
+    let productName = req.query.name;
+    let params = [];
+    if (productName) {
+      query = `SELECT p.product_name , pa.unit_price , s.supplier_name FROM products p INNER JOIN product_availability pa ON (p.id = pa.prod_id) INNER JOIN suppliers s ON (s.id = pa.supp_id) WHERE p.product_name LIKE $1`;
+      params.push(`%${productName}%`);
+    }
+    let result = await pool.query(query, params);
     res.json(result.rows);
   } catch (error) {
     console.error(error);
