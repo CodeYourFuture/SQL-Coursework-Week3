@@ -25,7 +25,19 @@ app.get("/customers", async function (req, res) {
     res.status(500).json(error);
   }
 });
+app.get("/customers/:customerId", async function (req, res) {
+  try {
+    const customerId = req.params.customerId;
 
+    let result = await pool.query("SELECT * FROM customers WHERE id=$1", [
+      customerId,
+    ]);
+    res.json(result.rows);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json(error);
+  }
+});
 // Get all suppliers
 app.get("/suppliers", async function (req, res) {
   try {
