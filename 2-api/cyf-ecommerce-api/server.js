@@ -63,8 +63,8 @@ app.post("/customers", async function (req, res) {
     const newCustomerAddress = req.body.address;
     const newCustomerCity = req.body.city;
     const newCustomerCountry = req.body.country;
-    
-    let result = pool.query("SELECT * FROM customers WHERE name=$1", [
+
+    let result = await pool.query("SELECT * FROM customers WHERE name=$1", [
       newCustomerName,
     ]);
 
@@ -75,13 +75,36 @@ app.post("/customers", async function (req, res) {
     } else {
       const query =
         "INSERT INTO customers (name, address, city, country) VALUES ($1, $2, $3, $4)";
-      let result = await pool.query(query, [
+      await pool.query(query, [
         newCustomerName,
         newCustomerAddress,
         newCustomerCity,
         newCustomerCountry,
       ]);
       res.send(`New customer added!`);
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json(error);
+  }
+});
+
+// Create new product
+app.post("/products", async function (req, res) {
+  try {
+    const newProductName = req.body.product_name;
+    let result = await pool.query(
+      "SELECT * FROM products WHERE product_name=$1",
+      [newProductName]
+    );
+    if (result.rows.length > 0) {
+      return res
+        .status(400)
+        .send("A product with the same name already exists!");
+    } else {
+      const query = "INSERT INTO products (product_name) VALUES ($1)";
+      await pool.query(query, [newProductName]);
+      res.send(`New product added!`);
     }
   } catch (error) {
     console.error(error);
