@@ -9,6 +9,8 @@ const pool = new Pool({
   port: 5432,
 });
 
+app.use(express.json());
+
 app.listen(3000, function () {
   console.log("Server is listening on port 3000. Ready to accept requests!");
 });
@@ -48,6 +50,39 @@ app.get("/products", async function (req, res) {
     }
     let result = await pool.query(query, params);
     res.json(result.rows);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json(error);
+  }
+});
+
+// Create new customer
+app.post("/customers", async function (req, res) {
+  try {
+    const newCustomerName = req.body.name;
+    const newCustomerAddress = req.body.address;
+    const newCustomerCity = req.body.city;
+    const newCustomerCountry = req.body.country;
+    
+    let result = pool.query("SELECT * FROM customers WHERE name=$1", [
+      newCustomerName,
+    ]);
+
+    if (result.rows.length > 0) {
+      return res
+        .status(400)
+        .send("A customer with the same name already exists!");
+    } else {
+      const query =
+        "INSERT INTO customers (name, address, city, country) VALUES ($1, $2, $3, $4)";
+      let result = await pool.query(query, [
+        newCustomerName,
+        newCustomerAddress,
+        newCustomerCity,
+        newCustomerCountry,
+      ]);
+      res.send(`New customer added!`);
+    }
   } catch (error) {
     console.error(error);
     res.status(500).json(error);
