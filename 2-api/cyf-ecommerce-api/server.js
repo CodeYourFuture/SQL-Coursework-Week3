@@ -126,3 +126,38 @@ app.post("/products", async function (req, res) {
     res.status(500).json(error);
   }
 });
+
+// POST new product_availability
+app.post("/availability", async function (req, res) {
+  try {
+    const newProductId = req.body.prod_id;
+    const newSupplierId = req.body.supp_id;
+    const newUnitPrice = req.body.unit_price;
+
+    let result1 = await pool.query("SELECT * FROM products WHERE id=$1", [
+      newProductId,
+    ]);
+    let result2 = await pool.query("SELECT * FROM suppliers WHERE id=$1", [
+      newSupplierId,
+    ]);
+    if (!result1.rows.length) {
+      return res.status(400).send("No matching product!");
+    }
+    if (!result2.rows.length) {
+      return res.status(400).send("No matching supplier!");
+    }
+    if (Math.sign(newUnitPrice) === 1) {
+      const query =
+        "INSERT INTO product_availability (prod_id, supp_id, unit_price) VALUES ($1, $2, $3)";
+      await pool.query(query, [newProductId, newSupplierId, newUnitPrice]);
+      res.send(`New product_availability added!`);
+    } else {
+      return res
+        .status(400)
+        .send("The price MUST be a positive no null number");
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json(error);
+  }
+});
