@@ -15,7 +15,7 @@ app.listen(3000, function () {
   console.log("Server is listening on port 3000. Ready to accept requests!");
 });
 
-// Get all customers
+// GET all customers
 app.get("/customers", async function (req, res) {
   try {
     let result = await pool.query("SELECT * FROM customers");
@@ -25,6 +25,8 @@ app.get("/customers", async function (req, res) {
     res.status(500).json(error);
   }
 });
+
+// GET customer by id
 app.get("/customers/:customerId", async function (req, res) {
   try {
     const customerId = req.params.customerId;
@@ -38,7 +40,8 @@ app.get("/customers/:customerId", async function (req, res) {
     res.status(500).json(error);
   }
 });
-// Get all suppliers
+
+// GET all suppliers
 app.get("/suppliers", async function (req, res) {
   try {
     let result = await pool.query("SELECT * FROM suppliers");
@@ -49,7 +52,7 @@ app.get("/suppliers", async function (req, res) {
   }
 });
 
-// Get all products
+// GET all products
 app.get("/products", async function (req, res) {
   try {
     let query =
@@ -68,7 +71,7 @@ app.get("/products", async function (req, res) {
   }
 });
 
-// Create new customer
+// POST new customer
 app.post("/customers", async function (req, res) {
   try {
     const newCustomerName = req.body.name;
@@ -101,7 +104,7 @@ app.post("/customers", async function (req, res) {
   }
 });
 
-// Create new product
+// POST new product
 app.post("/products", async function (req, res) {
   try {
     const newProductName = req.body.product_name;
