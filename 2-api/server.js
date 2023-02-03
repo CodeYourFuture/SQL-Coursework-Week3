@@ -109,11 +109,54 @@ app.post("/products", async (req, res) => {
   return;
 });
 
-// app.get("/suppliers", (req, res) => {
-//   pool
-//     .query("SELECT * FROM suppliers")
-//     .then((result) => res.json(result.rows))
-//     .catch((error) => {
-//       res.status(400).json(error);
-//     });
-// });
+
+
+
+app.post('/availability', (req, res) => {
+  const { prod_id, supp_id, unit_price } = req.body;
+
+  if (!prod_id || !supp_id || !unit_price) {
+    return res.status(400).send({ error: 'Product ID, Supplier ID, and Price are required fields' });
+  }
+
+  if (unit_price <= 0) {
+    return res.status(400).send({ error: 'Price must be a positive integer' });
+  }
+
+  pool.query(`
+    SELECT * 
+    FROM products 
+    WHERE id = $1`, [prod_id], (err, product) => {
+      if (err) {
+        return res.status(500).send({ error: 'Error checking for product existence' });
+      }
+
+      if (!product.rows.length) {
+        return res.status(400).send({ error: 'Product does not exist in the database' });
+      }
+
+      pool.query(`
+        SELECT * 
+        FROM suppliers 
+        WHERE id = $1`, [supp_id], (err, supplier) => {
+          if (err) {
+            return res.status(500).send({ error: 'Error checking for supplier existence' });
+          }
+
+          if (!supplier.rows.length) {
+            return res.status(400).send({ error: 'Supplier does not exist in the database' });
+          }
+
+          pool.query(`
+            INSERT INTO product_availability (prod_id, supp_id, unit_price)
+            VALUES ($1, $2, $3)`, [prod_id, supp_id, unit_price], (err, result) => {
+              if (err) {
+                console.log(unit_price)
+                return res.status(500).send({ error: 'Error inserting new product availability' });
+              }
+
+              res.status(201).send({ message: 'Product availability added successfully' });
+            });
+        });
+    });
+});
