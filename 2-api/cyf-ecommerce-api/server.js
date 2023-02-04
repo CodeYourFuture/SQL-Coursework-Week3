@@ -225,3 +225,15 @@ app.put("/customers/:customerId", async function (req, res) {
     res.status(500).json(error);
   }
 });
+
+// DELETE customer by id
+app.delete("/customers/:customerId", async function (req, res) {
+  try {
+    const customerId = req.params.customerId;
+    pool.query("DELETE FROM customers WHERE id=$1", [customerId]);
+    res.send(`Customer ${customerId} deleted!`);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json(error);
+  }
+});
