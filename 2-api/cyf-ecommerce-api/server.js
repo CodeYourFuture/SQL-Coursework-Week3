@@ -227,10 +227,28 @@ app.put("/customers/:customerId", async function (req, res) {
 });
 
 // DELETE customer by id
+app.delete("/orders/:orderId", async function (req, res) {
+  try {
+    const orderId = req.params.orderId;
+    await pool.query("DELETE FROM orders WHERE id=$1", [orderId]);
+    res.send(`Order ${orderId} deleted!`);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json(error);
+  }
+});
+
+// DELETE customer by id
 app.delete("/customers/:customerId", async function (req, res) {
   try {
     const customerId = req.params.customerId;
-    pool.query("DELETE FROM customers WHERE id=$1", [customerId]);
+    let result = await pool.query("SELECT * FROM orders WHERE customer_id=$1", [
+      customerId,
+    ]);
+    if (result.rows.length > 0) {
+      return res.status(400).send("Cannot delete customers that have orders!");
+    }
+    await pool.query("DELETE FROM customers WHERE id=$1", [customerId]);
     res.send(`Customer ${customerId} deleted!`);
   } catch (error) {
     console.error(error);
