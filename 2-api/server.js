@@ -212,3 +212,72 @@ app.put('/:customerId', (req, res) => {
   }
 });
 });
+
+
+
+app.delete('/orders/:orderId', async (req, res) => {
+  const  orderId = req.params.orderId;
+
+  try {
+    // Delete order items
+    const deleteOrderItemsQuery = 'DELETE FROM order_items WHERE order_id = $1';
+    await pool.query(deleteOrderItemsQuery, [orderId]);
+
+    // Delete order
+    const deleteOrderQuery = 'DELETE FROM orders WHERE id = $1';
+    await pool.query(deleteOrderQuery, [orderId]);
+    return res.sendStatus(200);
+  } catch (err) {
+    console.error(err);
+    return res.sendStatus(500);
+  }
+});
+
+
+app.delete('/customers/:customerId', async (req, res) => {
+  const  customerId  = req.params.customerId;
+
+  try {
+    // Check if customer has orders
+    const checkOrdersQuery = 'SELECT COUNT(*) FROM orders WHERE customer_id = $1';
+    const { rows } = await pool.query(checkOrdersQuery, [customerId]);
+    const orderCount = rows[0].count;
+
+    if (orderCount > 0) {
+      return res.status(400).send({ error: 'Customer has existing orders and cannot be deleted' });
+    }
+
+    // Delete customer
+    const deleteCustomerQuery = 'DELETE FROM customers WHERE id = $1';
+    await pool.query(deleteCustomerQuery, [customerId]);
+
+    return res.sendStatus(204);
+  } catch (err) {
+    console.error(err);
+    return res.sendStatus(500);
+  }
+});
+
+
+app.get('/customers/:customerId/orders', async (req, res) => {
+  const { customerId } = req.params;
+
+  try {
+    const ordersQuery = `
+      SELECT orders.order_reference, orders.order_date, products.product_name, product_availability.unit_price, suppliers.supplier_name, order_items.quantity
+      FROM orders
+      JOIN order_items ON orders.id = order_items.order_id
+      JOIN products ON order_items.product_id = products.id
+      JOIN product_availability ON order_items.product_id = product_availability.prod_id AND order_items.supplier_id = product_availability.supp_id
+      JOIN suppliers ON order_items.supplier_id = suppliers.id
+      WHERE orders.customer_id = $1
+    `;
+    const { rows } = await pool.query(ordersQuery, [customerId]);
+
+    return res.send(rows);
+  } catch (err) {
+    console.error(err);
+    return res.sendStatus(500);
+  }
+});
+
