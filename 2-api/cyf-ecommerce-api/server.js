@@ -199,3 +199,29 @@ app.post("/customers/:customerId/orders", async function (req, res) {
     res.status(500).json(error);
   }
 });
+
+// PUT customer by Id
+app.put("/customers/:customerId", function (req, res) {
+  const customerId = req.params.customerId;
+  const newCustomerName = req.body.name;
+  const newCustomerAddress = req.body.address;
+  const newCustomerCity = req.body.city;
+  const newCustomerCountry = req.body.country;
+
+  pool
+    .query(
+      "UPDATE customers SET name=$1, address=$2, city=$3, country=$4 WHERE id=$5",
+      [
+        newCustomerName,
+        newCustomerAddress,
+        newCustomerCity,
+        newCustomerCountry,
+        customerId,
+      ]
+    )
+    .then(() => res.send(`Customer ${customerId} updated!`))
+    .catch((error) => {
+      console.error(error);
+      res.status(500).json(error);
+    });
+});
