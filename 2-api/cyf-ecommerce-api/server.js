@@ -41,6 +41,22 @@ app.get("/customers/:customerId", async function (req, res) {
   }
 });
 
+// GET customer orders by customer id
+app.get("/customers/:customerId/orders", async function (req, res) {
+  try {
+    const customerId = req.params.customerId;
+
+    let result = await pool.query(
+      "SELECT o.order_reference, o.order_date, p.product_name, pa.unit_price, s.supplier_name, oi.quantity FROM customers c INNER JOIN orders o ON (c.id = o.customer_id ) INNER JOIN order_items oi ON (o.id = oi.order_id) INNER JOIN product_availability pa ON (oi.product_id = pa.prod_id) INNER JOIN products p ON (pa.prod_id = p.id) INNER JOIN suppliers s ON (pa.supp_id = s.id) WHERE c.id=$1;",
+      [customerId]
+    );
+    res.json(result.rows);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json(error);
+  }
+});
+
 // GET all suppliers
 app.get("/suppliers", async function (req, res) {
   try {
