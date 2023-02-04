@@ -161,3 +161,41 @@ app.post("/availability", async function (req, res) {
     res.status(500).json(error);
   }
 });
+
+// POST new order
+app.post("/customers/:customerId/orders", async function (req, res) {
+  try {
+    const newOrderDate = req.body.order_date;
+    const newCustomerId = req.body.customer_id;
+
+    let result1 = await pool.query("SELECT * FROM customers WHERE id=$1", [
+      newCustomerId,
+    ]);
+
+    let result2 = await pool.query(
+      "SELECT * FROM orders ORDER BY order_reference DESC LIMIT 1"
+    );
+    const newOrderRef =
+      "ORD" +
+      (
+        parseInt(result2.rows[0].order_reference.substring(3)) +
+        1 +
+        ""
+      ).padStart(3, "0");
+
+    if (!result1.rows.length) {
+      return res.status(400).send("No matching customer!");
+    }
+    if (newOrderDate instanceof Date) {
+      return res.status(400).send("Invalid date!");
+    }
+
+    const query =
+      "INSERT INTO orders (order_date, order_reference, customer_id) VALUES ($1, $2, $3)";
+    await pool.query(query, [newOrderDate, newOrderRef, newCustomerId]);
+    res.send(`New order added!`);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json(error);
+  }
+});
