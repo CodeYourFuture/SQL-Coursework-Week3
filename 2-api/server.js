@@ -7,6 +7,8 @@ const bp = require("body-parser");
 app.use(bp.json());
 app.use(bp.urlencoded({ extended: true }));
 
+
+let myavr=0;
 const port = process.env.PORT || 5000;
 app.listen(port, () => console.log(`Listening on port ${port}`));
 
@@ -151,7 +153,6 @@ app.post('/availability', (req, res) => {
             INSERT INTO product_availability (prod_id, supp_id, unit_price)
             VALUES ($1, $2, $3)`, [prod_id, supp_id, unit_price], (err, result) => {
               if (err) {
-                console.log(unit_price)
                 return res.status(500).send({ error: 'Error inserting new product availability' });
               }
 
@@ -159,4 +160,55 @@ app.post('/availability', (req, res) => {
             });
         });
     });
+});
+
+
+
+app.post('/customers/:customerId/orders', (req, res) => {
+  const { order_date, order_reference } = req.body;
+  const customerId = req.params.customerId;
+  if (!order_date || !order_reference) {
+    return res.status(400).send({ error: 'Order date and reference are required fields' });
+  }
+
+  pool.query(`
+    SELECT * 
+    FROM customers 
+    WHERE id = $1`, [customerId], (err, customer) => {
+      if (err) {
+        return res.status(500).send({ error: 'Error checking for customer existence' });
+      }
+
+      if (!customer.rows.length) {
+        return res.status(400).send({ error: 'Customer does not exist in the database' });
+      }
+
+      pool.query(`
+        INSERT INTO orders (customer_id, order_date, order_reference)
+        VALUES ($1, $2, $3)`, [customerId, order_date, order_reference], (err, result) => {
+          if (err) {
+            return res.status(500).send({ error: 'Error inserting new order' });
+          }
+
+          res.status(201).send({ message: 'Order added successfully' });
+        });
+    });
+});
+
+
+app.put('/:customerId', (req, res) => {
+  const { name, address, city, country } = req.body;
+  const customerId = req.params.customerId;
+  pool.query('UPDATE customers SET name=$1, address=$2, city=$3, country=$4 WHERE id=$5', [name, address, city, country, customerId], (error, result) => {
+  if (error) {
+    res.status(500).json({
+      message: 'An error occurred while updating the customer',
+      error: error.message
+    });
+  } else {
+    res.status(200).json({
+      message: 'Customer updated successfully'
+    });
+  }
+});
 });
