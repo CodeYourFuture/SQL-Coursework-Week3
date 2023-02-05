@@ -1,6 +1,7 @@
 const express = require("express");
 const app = express();
 const { Pool } = require("pg");
+const moment = require("moment");
 
 app.use(express.json());
 
@@ -70,6 +71,44 @@ app.post("/products", (req, res) => {
     .catch((err) => {
       console.log(err);
       res.status(500).json("Request denied, server issue");
+    });
+});
+
+app.post("/availability", (req, res) => {
+  const productId = req.body.prodID;
+  const supplierId = req.body.supID;
+  const unitPrice = req.body.price;
+
+  pool
+    .query("INSERT INTO product_availability VALUES($1,$2,$3)", [
+      productId,
+      supplierId,
+      unitPrice,
+    ])
+    .then((result) => res.json({ message: "Product saved successfully" }))
+    .catch((err) => {
+      console.error(err);
+      res.status(500).json("Request denied, server issues");
+    });
+});
+
+app.post("/customers/:customerId/orders", (req, res) => {
+  const id = 11;
+  const customerId = req.params.customerId;
+  const date = moment().format("YYYY-MM-DD");
+  const ref = `ORD0${id}`;
+
+  pool
+    .query("INSERT INTO orders VALUES($1,$2,$3,$4)", [
+      id,
+      date,
+      ref,
+      customerId,
+    ])
+    .then((result) => res.json({ message: "Product saved successfully" }))
+    .catch((err) => {
+      console.error(err);
+      res.status(500).json("Request denied, server issues");
     });
 });
 
