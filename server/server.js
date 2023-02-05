@@ -112,6 +112,30 @@ app.post("/customers/:customerId/orders", (req, res) => {
     });
 });
 
+app.put("/customers/:customerId", (req, res) => {
+  const customerID = req.params.customerId;
+  const name = req.body.name;
+  const address = req.body.address;
+  const city = req.body.city;
+  const country = req.body.country;
+  pool
+    .query(
+      "UPDATE customers SET name = $1, address = $2, city = $3, country = $4 WHERE id = $5",
+      [name, address, city, country, customerID]
+    )
+    .then((result) =>
+      res.json({ message: `Customer ID ${customerID} updated successfully.` })
+    )
+    .catch((err) => {
+      console.error(err);
+      res.status(500).json("Request denied, action failed");
+    });
+
+  console.log("data updated");
+});
+
+
+
 app.listen(process.env.PORT || 3000, () => {
   console.log("server is up");
 });
