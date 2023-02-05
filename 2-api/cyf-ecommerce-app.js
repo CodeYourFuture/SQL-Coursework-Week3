@@ -96,3 +96,16 @@ app.post("/customers", (req, res) => {
       res.status(500).json(error);
     });
 });
+
+
+app.post("/products" , (req, res) => {
+  const newProduct =  req.body.product_name;
+  const query = "INSERT INTO PRODUCTS (product_name) VALUES ($1)";
+  pool
+  .query(query, [newProduct])
+  .then(() => res.send("Product created!"))
+  .catch((error) => {
+    console.error(error);
+    res.status(500).json(error);
+  });
+});
