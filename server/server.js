@@ -186,7 +186,20 @@ app.delete("/customers/:customerId", (req, res) => {
     });
 });
 
+app.get("/customers/:customerId/orders", (req, res) => {
+  const customerId = req.params.customerId;
 
+  pool
+    .query(
+      "SELECT o.order_reference, o.order_date, p.product_name, pa.unit_price,s.supplier_name, oi.quantity FROM orders o JOIN order_items oi ON o.id = oi.order_id JOIN product_availability pa ON oi.product_id = pa.prod_id JOIN products p ON pa.prod_id = p.id JOIN suppliers s ON pa.supp_id = s.id WHERE o.customer_id = $1",
+      [customerId]
+    )
+    .then((result) => res.json(result.rows))
+    .catch((err) => {
+      console.error(err);
+      res.status(500).json("Unable to process your request. try again later");
+    });
+});
 
 app.listen(process.env.PORT || 3000, () => {
   console.log("server is up");
