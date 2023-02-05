@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const { Pool } = require("pg");
 const moment = require("moment");
+const { response } = require("express");
 
 app.use(express.json());
 
@@ -13,14 +14,22 @@ const pool = new Pool({
   port: 5432,
 });
 
-app.get("/customers", (req, res) => {
-  pool
-    .query(`SELECT * FROM customers`)
-    .then((result) => res.json(result.rows))
-    .catch((error) => {
-      console.error(error);
-      res.status(500).json(error);
-    });
+app.get("/customers", async (req, res) => {
+  const { rows } = await pool.query(
+    "SELECT * FROM customers WHERE id = 5 ",
+    []
+  );
+  res.json(rows);
+
+  //   const { rows } = await pool.query(`SELECT * FROM customers`);
+  //   console.log(rows);
+  //   pool
+  //     .query(`SELECT * FROM customers`)
+  //     .then((result) => res.json(result.rows))
+  //     .catch((error) => {
+  //       console.error(error);
+  //       res.status(500).json(error);
+  //     });
 });
 
 app.get("/customers/:customerId", (req, res) => {
@@ -148,42 +157,35 @@ app.delete("/orders/:orderId", (req, res) => {
     });
 });
 
-app.delete("/customers/:customerId", (req, res) => {
+app.delete("/customers/:customerId", async (req, res) => {
   const customerId = req.params.customerId;
+  const { rows } = await pool.query(
+    "SELECT id,(SELECT  COUNT(customer_id) FROM orders WHERE customer_id = $1) AS orders FROM customers WHERE id =$1",
+    [customerId]
+  );
 
-  pool
-    .query("SELECT * FROM orders WHERE customer_id = $1", [customerId])
-    .then((result) => {
-      console.log(result.rows);
-      if (!result.rowCount > 0) {
-        pool
-          .query("DELETE FROM customers WHERE id = $1", [customerId])
-          .then((result) =>
-            res.json({
-              message: `Customer ID ${customerId} deleted successfully.`,
-            })
-          )
-          .catch((err) => {
-            console.log(err);
-            res
-              .status(500)
-              .json(
-                `unable to delete customer ID ${customerId}, contact your system admin`
-              );
-          });
-      } else
+  if (rows.length > 0 && rows[0].orders == "0") {
+    pool
+      .query("DELETE FROM customers WHERE id = $1", [customerId])
+      .then((result) =>
+        res.json({
+          message: `Customer ID ${customerId} deleted successfully.`,
+        })
+      )
+      .catch((err) => {
+        console.log(err);
         res
-          .status()
+          .status(500)
           .json(
-            "unable to delete customer because customer have/has got order(s)."
+            `unable to delete customer ID ${customerId}, contact your system admin`
           );
-    })
-    .catch((err) => {
-      console.error(err);
-      res
-        .status(500)
-        .json(`Request forbidden, Unable to delete customer id ${customerId}`);
-    });
+      });
+  } else
+    res
+      .status(500)
+      .json(
+        `unable to delete customer because customer has got order(s) or customer ${customerId} not found.`
+      );
 });
 
 app.get("/customers/:customerId/orders", (req, res) => {
