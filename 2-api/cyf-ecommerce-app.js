@@ -64,18 +64,35 @@ app.listen(4000, function () {
   console.log("Server is listening on port 4000. Ready to accept request");
 });
 
-
 //customer by id
 
 app.get("/customers/:id", (req, res) => {
   const customerId = req.params.id;
   const query = "select * from customers where id = $1";
   pool
-  .query(query, [customerId])
-  .then ((result) => res.json(result.rows))
-.catch ((error) => {
-  console.error(error);
-res.status(400).json(error);
-});
+    .query(query, [customerId])
+    .then((result) => res.json(result.rows))
+    .catch((error) => {
+      console.error(error);
+      res.status(400).json(error);
+    });
 });
 
+//Add a new POST endpoint `/customers` to create a new customer with name, address, city and country.
+
+app.post("/customers", (req, res) => {
+  const newName = req.body.name;
+  const newAddress = req.body.address;
+  const newCity = req.body.city;
+  const newCountry = req.body.country;
+  const query =
+    "INSERT INTO customers (name, address, city, country) VALUES ($1, $2, $3, $4) RETURNING *;";
+  console.log(req.body);
+  pool
+    .query(query, [newName, newAddress, newCity, newCountry])
+    .then(() => res.send("Customer created!"))
+    .catch((error) => {
+      console.error(error);
+      res.status(500).json(error);
+    });
+});
