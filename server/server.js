@@ -15,10 +15,7 @@ const pool = new Pool({
 });
 
 app.get("/customers", async (req, res) => {
-  const { rows } = await pool.query(
-    "SELECT * FROM customers WHERE id = 5 ",
-    []
-  );
+  const { rows } = await pool.query("SELECT * FROM customers", []);
   res.json(rows);
 
   //   const { rows } = await pool.query(`SELECT * FROM customers`);
@@ -31,6 +28,8 @@ app.get("/customers", async (req, res) => {
   //       res.status(500).json(error);
   //     });
 });
+
+//- GET endpoint `/customers/:customerId` to load a single customer by ID.
 
 app.get("/customers/:customerId", (req, res) => {
   const customerID = req.params.customerId;
@@ -54,6 +53,8 @@ app.get("/suppliers", (req, res) => {
     });
 });
 
+//- GET endpoint `/products` to filter the list of products by name using a query parameter, for example `/products?name=Cup`. This endpoint should still work even if you don't use the `name` query parameter!
+
 app.get("/products", (req, res) => {
   const name = req.query.name.toLowerCase();
 
@@ -67,6 +68,36 @@ app.get("/products", (req, res) => {
       res.status(500).json(error);
     });
 });
+
+//-POST endpoint `/customers` to create a new customer with name, address, city and country.
+
+app.post("/customers", (req, res) => {
+  const customer = {
+    id: 8,
+    name: req.body.name,
+    address: req.body.address,
+    city: req.body.city,
+    country: req.body.country,
+  };
+
+  pool
+    .query("INSERT INTO customers VALUES($1,$2,$3,$4,$5)", [
+      customer.id,
+      customer.name,
+      customer.address,
+      customer.city,
+      customer.country,
+    ])
+    .then((result) =>
+      res.json({ message: "Record saved successfully", data: customer })
+    )
+    .catch((err) => {
+      console.log(err);
+      res.status(500).json("Failed to save record.");
+    });
+});
+
+//- POST endpoint `/products` to create a new product.
 
 app.post("/products", (req, res) => {
   const id = req.body.id;
@@ -82,6 +113,8 @@ app.post("/products", (req, res) => {
       res.status(500).json("Request denied, server issue");
     });
 });
+
+//- POST endpoint `/availability` to create a new product availability (with a price and a supplier id). Check that the price is a positive integer and that both the product and supplier ID's exist in the database, otherwise return an error.
 
 app.post("/availability", (req, res) => {
   const productId = req.body.prodID;
@@ -100,6 +133,8 @@ app.post("/availability", (req, res) => {
       res.status(500).json("Request denied, server issues");
     });
 });
+
+//- POST endpoint `/customers/:customerId/orders` to create a new order (including an order date, and an order reference) for a customer. Check that the customerId corresponds to an existing customer or return an error.
 
 app.post("/customers/:customerId/orders", (req, res) => {
   const id = 11;
@@ -120,6 +155,8 @@ app.post("/customers/:customerId/orders", (req, res) => {
       res.status(500).json("Request denied, server issues");
     });
 });
+
+//- PUT endpoint `/customers/:customerId` to update an existing customer (name, address, city and country).
 
 app.put("/customers/:customerId", (req, res) => {
   const customerID = req.params.customerId;
@@ -143,6 +180,8 @@ app.put("/customers/:customerId", (req, res) => {
   console.log("data updated");
 });
 
+//- DELETE endpoint `/orders/:orderId` to delete an existing order along with all the associated order items.
+
 app.delete("/orders/:orderId", (req, res) => {
   const orderId = req.params.orderId;
 
@@ -156,6 +195,8 @@ app.delete("/orders/:orderId", (req, res) => {
       res.status(500).json("Access denied, failed to delete record.");
     });
 });
+
+//- DELETE endpoint `/customers/:customerId` to delete an existing customer only if this customer doesn't have orders.
 
 app.delete("/customers/:customerId", async (req, res) => {
   const customerId = req.params.customerId;
@@ -187,6 +228,8 @@ app.delete("/customers/:customerId", async (req, res) => {
         `unable to delete customer because customer has got order(s) or customer ${customerId} not found.`
       );
 });
+
+//- GET endpoint `/customers/:customerId/orders` to load all the orders along with the items in the orders of a specific customer. Especially, the following information should be returned: order references, order dates, product names, unit prices, suppliers and quantities.
 
 app.get("/customers/:customerId/orders", (req, res) => {
   const customerId = req.params.customerId;

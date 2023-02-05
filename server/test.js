@@ -1,7 +1,7 @@
 const sendData = async () => {
   try {
-    const res = await fetch("http://localhost:3000/customers/4", {
-      method: "PUT",
+    const res = await fetch("http://localhost:3000/customers", {
+      method: "POST",
       headers: {
         Accept: "application/json",
         "Content-type": "application/json",
@@ -14,7 +14,7 @@ const sendData = async () => {
       }),
     });
     const out = await res.json();
-    console.log(out);
+    console.log(out.data);
   } catch (e) {
     console.log(e);
   }
