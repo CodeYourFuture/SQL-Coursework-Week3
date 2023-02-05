@@ -134,6 +134,58 @@ app.put("/customers/:customerId", (req, res) => {
   console.log("data updated");
 });
 
+app.delete("/orders/:orderId", (req, res) => {
+  const orderId = req.params.orderId;
+
+  pool
+    .query("DELETE FROM orders WHERE id = $1", [orderId])
+    .then((result) =>
+      res.json({ messsage: `Order ${orderId} deleted successfully.` })
+    )
+    .catch((err) => {
+      console.log(err);
+      res.status(500).json("Access denied, failed to delete record.");
+    });
+});
+
+app.delete("/customers/:customerId", (req, res) => {
+  const customerId = req.params.customerId;
+
+  pool
+    .query("SELECT * FROM orders WHERE customer_id = $1", [customerId])
+    .then((result) => {
+      console.log(result.rows);
+      if (!result.rowCount > 0) {
+        pool
+          .query("DELETE FROM customers WHERE id = $1", [customerId])
+          .then((result) =>
+            res.json({
+              message: `Customer ID ${customerId} deleted successfully.`,
+            })
+          )
+          .catch((err) => {
+            console.log(err);
+            res
+              .status(500)
+              .json(
+                `unable to delete customer ID ${customerId}, contact your system admin`
+              );
+          });
+      } else
+        res
+          .status()
+          .json(
+            "unable to delete customer because customer have/has got order(s)."
+          );
+    })
+    .catch((err) => {
+      console.error(err);
+      res
+        .status(500)
+        .json(`Request forbidden, Unable to delete customer id ${customerId}`);
+    });
+});
+
 
 
 app.listen(process.env.PORT || 3000, () => {
