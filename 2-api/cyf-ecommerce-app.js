@@ -63,3 +63,19 @@ app.get("/products", (req, res) => {
 app.listen(4000, function () {
   console.log("Server is listening on port 4000. Ready to accept request");
 });
+
+
+//customer by id
+
+app.get("/customers/:id", (req, res) => {
+  const customerId = req.params.id;
+  const query = "select * from customers where id = $1";
+  pool
+  .query(query, [customerId])
+  .then ((result) => res.json(result.rows))
+.catch ((error) => {
+  console.error(error);
+res.status(400).json(error);
+});
+});
+
