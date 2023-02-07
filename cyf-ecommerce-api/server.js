@@ -153,6 +153,20 @@ app.post("/products", (req, res) => {
     });
 });
 
+//DELETE an existing order
+app.delete("/orders/:orderId", (req, res) => {
+  const orderId = Number(req.params.orderId);
+  const query = "DELETE FROM orders WHERE id = $1";
+  const params = [orderId];
+  pool.query("SELECT* FROM orders WHERE id = $1", [orderId]).then((result) => {
+    let final = `${result.rowCount}`;
+    if(result.rowCount == 0) {
+      res.send("There is not matching order");
+    }
+    pool.query(query, params).then(res.send(`Order with this ID: ${orderId} deleted`));
+  });
+});
+
 //POST(/availability)
 app.post("/availability", (req, res) => {
   const productId = req.body.prod_id;
