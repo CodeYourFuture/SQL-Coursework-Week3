@@ -75,6 +75,41 @@ app.post("/customers", (req, res) => {
   });
 });
 
+//post new product
+app.post("/products", (req, res) => {
+  const productName = req.body.product_name;
+  const unitPrice = req.body.unit_price;
+  const supplierName = req.body.supplier_name;
+  const query =
+    "INSERT INTO products (id,name, address, city, country) VALUES ( (SELECT MAX(id) FROM products) + 1 , $1, $2, $3)";
+  const params = [productName, unitPrice, supplierName];
+  pool
+    .query(query, params)
+    .then(() => {
+      pool
+        .query("SELECT * FROM products")
+        .then((result) => {
+          res.json(result.rows);
+        })
+        .catch((error) => {
+          console.error(error);
+          res.status(500).json(error);
+        });
+    })
+    .catch((error) => {
+      console.error(error);
+      res.status(500).json(error);
+    });
+});
+
+app.post("/availability", (req, res) => {
+  const productId = req.body.prod_id;
+  const supplierId = req.body.supp_id;
+  const unitPrice = req.body.unit_price;
+  pool.query("INSERT INTO product_availability (unit_price) VALUES ($1) ", [unitPrice]).then(res.send("Availability added"));
+
+});
+
 app.listen(3000, function () {
   console.log("Server is listening on port 3000. Ready to accept requests!");
 });
