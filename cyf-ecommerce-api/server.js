@@ -201,6 +201,28 @@ app.post("customers/:customerId/orders", (req, res) => {
     });
 });
 
+//delete an existing customer
+app.delete("/customers/:customerId", async (req, res) => {
+  const customerID = Number(req.params.customerId);
+  const query =
+    "SELECT orders.order_reference, orders.order_date, products.product_name, product_availability.unit_price, suppliers.supplier_name, order_items.quantity, customers.id FROM orders JOIN order_items ON order_items.order_id = orders.id JOIN products ON order_items.product_id = products.id JOIN product_availability ON order_items.product_id = product_availability.prod_id JOIN suppliers ON order_items.supplier_id = suppliers.id JOIN customers ON orders.customer_id = customers.id WHERE customers.id = $1";
+  const params = [customerID];
+  await pool.query(query, params).then((result) => {
+    let final = `${result.rowCount}`;
+    if (result.rowCount == 0) {
+      pool
+        .query("DELETE FROM customers WHERE id = $1", [customerID])
+        .then(
+          res.send(
+            `Customer with ID :  ${customerID} does not have any order has been deleted`
+          )
+        );
+    } else {
+      res.send("Customer has some orders");
+    }
+  });
+});
+
 app.listen(3000, function () {
   console.log("Server is listening on port 3000. Ready to accept requests!");
 });
