@@ -160,10 +160,12 @@ app.delete("/orders/:orderId", (req, res) => {
   const params = [orderId];
   pool.query("SELECT* FROM orders WHERE id = $1", [orderId]).then((result) => {
     let final = `${result.rowCount}`;
-    if(result.rowCount == 0) {
+    if (result.rowCount == 0) {
       res.send("There is not matching order");
     }
-    pool.query(query, params).then(res.send(`Order with this ID: ${orderId} deleted`));
+    pool
+      .query(query, params)
+      .then(res.send(`Order with this ID: ${orderId} deleted`));
   });
 });
 
@@ -177,6 +179,17 @@ app.post("/availability", (req, res) => {
       unitPrice,
     ])
     .then(res.send("Availability added"));
+});
+
+//GET "load all the orders"
+app.get("/customers/:customerId/orders", (req, res) => {
+  const customerId = Number(req.params.customerId);
+  const query =
+    "SELECT orders.order_reference, orders.order_date, products.product_name, product_availability.unit_price, suppliers.supplier_name, order_items.quantity, customers.id FROM orders JOIN order_items ON order_items.order_id = orders.id JOIN products ON order_items.product_id = products.id JOIN product_availability ON order_items.product_id = product_availability.prod_id JOIN suppliers ON order_items.supplier_id = suppliers.id JOIN customers ON orders.customer_id = customers.id WHERE customers.id = $1";
+  const params = [customerId];
+  pool.query(query, params).then((result) => {
+    res.send(result.rows);
+  });
 });
 
 //create new order
