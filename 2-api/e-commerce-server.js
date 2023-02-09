@@ -22,19 +22,27 @@ app.get("/", function(req, res){
   res.json("Welcome to the CYF e-Commerce API");
 })
 
+// GET endpoint /products
 app.get("/products", function(req, res){
-  const productQuery = req.query.name;
+  const productNameQuery = req.query.name;
   let query =
     "SELECT products.product_name, product_availability.unit_price, suppliers.supplier_name FROM products INNER JOIN product_availability ON products.id = product_availability.prod_id INNER JOIN suppliers ON product_availability.supp_id = suppliers.id;";
-    
-    
-    pool.query(query)
+  let params = [];
+  if(productNameQuery){
+    query =
+      "SELECT products.product_name, product_availability.unit_price, suppliers.supplier_name FROM products INNER JOIN product_availability ON products.id = product_availability.prod_id INNER JOIN suppliers ON product_availability.supp_id = suppliers.id WHERE products.product_name LIKE $1";
+      params.push(`%${productNameQuery}%`);
+  }     
+    pool.query(query, params)
     .then((result) => res.json(result.rows))
     .catch((error) => {
       console.error(error);
       res.status(500).json(error);
     });
 });
+
+
+
 
 
 app.listen(port, function () {
