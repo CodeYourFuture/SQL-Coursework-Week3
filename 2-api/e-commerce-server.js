@@ -41,7 +41,17 @@ app.get("/products", function(req, res){
     });
 });
 
-
+app.get("/customers/:customerId", function(req, res){
+  const custId = req.params.customerId;
+  let query = "SELECT * FROM customers WHERE id=$1";
+  let params = [custId];
+  pool.query(query, params)
+  .then((result) => res.json(result.rows))
+  .catch((error) => {
+    console.error(error);
+    res.status(500).json(error);
+  })
+})
 
 
 
