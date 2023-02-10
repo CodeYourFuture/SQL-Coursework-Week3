@@ -90,6 +90,72 @@ app.post("/customers", function(req, res){
 });
 
 
+// Post/ Create a new product
+app.post("/products", function(req, res){
+  const newProductName = req.body.product_name;
+
+  pool
+    .query("SELECT * FROM products WHERE product_name=$1", [newProductName])
+    .then((result) => {
+      if (result.rows.length > 0) {
+        return res
+          .status(400)
+          .send("A product with the entered name already exists!");
+      } else {
+        pool
+          .query(
+            "INSERT INTO products (product_name) VALUES ($1)",
+            [newProductName]
+          )
+          .then(() => res.send("A new product is created!"))
+          .catch((error) => {
+            console.error(error);
+            res.status(500).json(error);
+          });
+      }
+    });
+})
+
+// POST /availability endpoint
+app.post("/availability", function(req, res){
+  const newProductID = req.body.prod_id;
+  const newSupplierID = req.body.supp_id;
+  const newUnitPrice = req.body.unit_price;
+
+  let productExist = (pool.query("SELECT * FROM products WHERE id=$1", [newProductID])).rows.length;
+  let supplierExist = (pool.query("SELECT * FROM suppliers WHERE id=$1", [newSupplierID])).rows.length;
+
+  if (newUnitPrice <= 0) {
+    return res
+      .status(400)
+      .send("The unit price cannot be less than or equal to zero");
+  }
+  if (!productExist || !supplierExist) {
+    return res
+      .status(400)
+      .send("The product and/or the supplier does not exist");
+  }
+  pool
+    .query("SELECT * FROM product_availability WHERE prod_id=$1", [newProductID])
+    .then((result) => {
+      if (result.rows.length > 0) {
+        return res
+          .status(400)
+          .send("A product availability with the entered ID already exists!");
+      } else {
+        pool
+          .query("INSERT INTO product_availability (prod_id, supp_id, unit_price) VALUES ($1, $2, $3)", [
+            newProductID, newSupplierID, newUnitPrice
+          ])
+          .then(() => res.send("A new product availability is created!"))
+          .catch((error) => {
+            console.error(error);
+            res.status(500).json(error);
+          });
+      }
+    });
+});
+
 
 
 app.listen(port, function () {
