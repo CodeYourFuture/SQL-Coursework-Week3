@@ -38,6 +38,17 @@ app.post("/customers", function (req, res) {
   });
 });
 
+app.post("/products", function (req, res) {
+  const { name } = req.body;
+
+  db.query("INSERT INTO products (product_name) VALUES ($1) RETURNING *", [name], (error, results) => {
+    if (error) {
+      throw error;
+    }
+    res.status(201).send(`User added with ID: ${results.rows[0].id}`);
+  });
+});
+
 //
 app.get("/suppliers", function (req, res) {
   db.query("SELECT * FROM suppliers", (error, result) => {
@@ -47,12 +58,12 @@ app.get("/suppliers", function (req, res) {
 
 app.get("/products", (req, res) => {
   const searchKey = req.query.name;
-  console.log(searchKey);
-  let query = "select p.product_name, p_a.unit_price,s.supplier_name from products p join product_availability p_a on (p.id = p_a.prod_id) join suppliers s on (s.id = p_a.supp_id)";
+  let query = "select * from products";
 
   let params = [];
   if (searchKey) {
-    query += "WHERE p.product_name LIKE $1";
+    query =
+      "select p.product_name, p_a.unit_price,s.supplier_name from products p join product_availability p_a on (p.id = p_a.prod_id) join suppliers s on (s.id = p_a.supp_id) WHERE p.product_name LIKE $1";
     params.push(`%${searchKey}%`);
   }
 
