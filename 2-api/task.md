@@ -33,3 +33,5 @@ In the following homework, you will create new API endpoints in the NodeJS appli
 - Add a new GET endpoint `/customers/:customerId/orders` to load all the orders along with the items in the orders of a specific customer. Especially, the following information should be returned: order references, order dates, product names, unit prices, suppliers and quantities.
 
 <!-- Checking tasks - first commit -->
+<!-- ALL COMMITS IN THE SQL W2 FILES  -->
+<!-- https://github.com/AnoshMalik/SQL-Coursework-Week2 -->
