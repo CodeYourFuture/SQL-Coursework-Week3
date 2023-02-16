@@ -104,7 +104,7 @@ app.get("/products", async (req, res) => {
     ON products.id = product_availability.prod_id
     INNER JOIN suppliers
     ON product_availability.supp_id = suppliers.id
-    WHERE lower(products.product_name) LIKE $1`, [`%${req.query.name}%`]);
+    WHERE lower(products.product_name) LIKE $1`, [`%${req.query.name.toLowerCase()}%`]);
 
     const products = rs.rows;
     return res.json(products);
