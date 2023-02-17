@@ -65,16 +65,62 @@ app.post("/availability", async (req, res) => {
   }
 });
 
-app.put("/customers/:customerId", function (req, res) {
-  const customerID = +eq.params.id;
+// PUT method
+app.put("/customers/:customerId", async function (req, res) {
+  const customerID = +req.params.customerId;
   const { name, address, city, country } = req.body;
 
-  db.query("UPDATE customers SET name = $1, address = $2, city = $3, country = $4 WHERE id = $5", [name, address, city, country, customerID], (error, results) => {
-    if (error) {
-      throw error;
-    }
-    res.status(202).send(`Customer modified with ID: ${id}`);
-  });
+  const checkId = await db.query("SELECT * FROM customers WHERE id = $1", [customerID]).then((data) => data.rowCount > 0);
+  if (checkId) {
+    db.query("UPDATE customers SET name = $1, address = $2, city = $3, country = $4 WHERE id = $5", [name, address, city, country, customerID], (error, results) => {
+      if (error) {
+        throw error;
+      }
+      res.status(202).send(`Customer modified with ID: ${customerID}`);
+    });
+  } else {
+    res.status(400).send(`ID not available`);
+  }
+});
+
+// DELETE method orders
+app.delete("/orders/:orderId", async function (req, res) {
+  const orderId = +req.params.orderId;
+  const orderItemIdCheck = await db.query("SELECT * FROM orders WHERE id = $1", [orderId]).then((data) => data.rowCount > 0);
+  const ordersIdCheck = await db.query("SELECT * FROM order_items WHERE order_id = $1", [orderId]).then((data) => data.rowCount > 0);
+  if (ordersIdCheck && orderItemIdCheck) {
+    db.query("DELETE FROM order_items WHERE order_id = $1", [orderId], (error, results) => {
+      if (error) {
+        throw error;
+      }
+    });
+
+    db.query("DELETE FROM orders WHERE id = $1", [orderId], (error, results) => {
+      if (error) {
+        throw error;
+      }
+      res.status(200).send(`User deleted with ID: ${orderId}`);
+    });
+  } else {
+    res.status(400).send(`Delete id not available`);
+  }
+});
+
+// DELETE method customers
+app.delete("/customers/:customerId", async function (req, res) {
+  const customerId = +req.params.customerId;
+  const customerIdCheck = await db.query("SELECT * FROM customers WHERE id = $1", [customerId]).then((data) => data.rowCount > 0);
+  const customerIdInordersCheck = await db.query("SELECT * FROM orders WHERE customer_id = $1", [customerId]).then((data) => data.rowCount === 0);
+  if (customerIdCheck && customerIdInordersCheck) {
+    db.query("DELETE FROM customers WHERE id = $1", [customerId], (error, results) => {
+      if (error) {
+        throw error;
+      }
+      res.status(200).send(`Customer deleted with ID: ${customerId}`);
+    });
+  } else {
+    res.status(400).send(`Delete id not available or customer has orders`);
+  }
 });
 
 //
