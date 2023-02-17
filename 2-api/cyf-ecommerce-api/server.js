@@ -1,7 +1,10 @@
 const express = require("express");
+const bodyParser = require("body-parser");
 const app = express();
 
 const { Pool } = require("pg");
+
+app.use(bodyParser.json());
 
 const db = new Pool({
   user: "codeyourfuture", // replace with you username
@@ -10,11 +13,22 @@ const db = new Pool({
   password: "cyf123",
   port: 5432,
 });
+// GET
 
 app.get("/customers", function (req, res) {
   db.query("SELECT * FROM customers", (error, result) => {
     res.json(result.rows);
   });
+});
+
+app.get("/customers/:customerId", function (req, res) {
+  db.query(
+    "SELECT * FROM customers where id = $1",
+    [parseInt(req.params.customerId)],
+    (error, result) => {
+      res.json(result.rows);
+    }
+  );
 });
 
 app.get("/suppliers", function (req, res) {
@@ -26,6 +40,81 @@ app.get("/suppliers", function (req, res) {
   );
 });
 
-app.listen(3000, function () {
-  console.log("Server is listening on port 3000. Ready to accept requests!");
+app.get("/products", function (req, res) {
+  let queryParams = [];
+  let sql =
+    "select p.product_name, pa.unit_price, s.supplier_name from product_availability pa join products p on (pa.prod_id = p.id) join suppliers s on (s.id = pa.supp_id)";
+  if (req.query.name) {
+    sql +=
+      " where p.product_name ilike $1 || '%' or p.product_name ilike '%' || $1 or p.product_name ilike '%' || $1 || '%'";
+    queryParams.push(req.query.name);
+  }
+
+  db.query(sql, queryParams, (error, result) => {
+    res.json(result.rows);
+  });
+});
+
+//POST
+
+app.post("/customers", function (req, res) {
+  const newName = req.body.name;
+  const newAdd = req.body.address;
+  const newCity = req.body.city;
+  const newCountry = req.body.country;
+
+  const query =
+    "INSERT INTO customers (name, address, city, country) " +
+    "VALUES ($1, $2, $3, $4)" +
+    "RETURNING id";
+
+  db.query(query, [newName, newAdd, newCity, newCountry], (err, result) => {
+    res.send(`Customer ${result.rows[0].id} created.`);
+  });
+});
+
+app.post("/products", function (req, res) {
+  const newProduct = req.body.name;
+
+  const query =
+    "INSERT INTO products (product_name) " + "VALUES ($1)" + "RETURNING id";
+
+  db.query(query, [newProduct], (err, result) => {
+    res.send(`Product ${result.rows[0].id} created.`);
+  });
+});
+
+//PUT
+app.put("/customers/:customerId", function (req, res) {
+  const custId = req.params.customerId;
+  const newName = req.body.name;
+  const newAdd = req.body.address;
+  const newCity = req.body.city;
+  const newCountry = req.body.country;
+
+  db.query(
+    "UPDATE customers SET name=$2, address = $3, city = $4, country = $5 WHERE id=$1",
+    [custId, newName, newAdd, newCity, newCountry]
+  )
+    .then(() => res.send(`Customer ${custId} updated!`))
+    .catch((err) => {
+      res.status(500).json({ error: err });
+    });
+});
+
+//DELETE
+app.delete("/orders/:orderId", function (req, res) {
+  const Id = req.params.orderId;
+
+  db.query("DELETE FROM order_items WHERE order_id=$1", [Id])
+    .then(() => {
+      db.query("DELETE FROM orders WHERE id=$1", [Id])
+        .then(() => res.send(`Order ${Id} deleted!`))
+        .catch((e) => console.error(e));
+    })
+    .catch((e) => console.error(e));
+});
+
+app.listen(3100, function () {
+  console.log("Server is listening on port 3100. Ready to accept requests!");
 });
