@@ -27,15 +27,15 @@ app.get("/customers/:id", function (req, res) {
 
 // POST METHOD customers
 app.post("/customers", function (req, res) {
-  console.log(req.body);
   const { name, address, city, country } = req.body;
-
-  db.query("INSERT INTO customers (name, address, city, country) VALUES ($1, $2, $3, $4) RETURNING *", [name, address, city, country], (error, results) => {
-    if (error) {
-      throw error;
-    }
-    res.status(201).send(`User added with ID: ${results.rows[0].id}`);
-  });
+  if (name && address && city && country) {
+    db.query("INSERT INTO customers (name, address, city, country) VALUES ($1, $2, $3, $4) RETURNING *", [name, address, city, country], (error, results) => {
+      if (error) {
+        throw error;
+      }
+      res.status(201).send(`User added with ID: ${results.rows[0].id}`);
+    });
+  }
 });
 
 // POST METHOD products
@@ -62,6 +62,23 @@ app.post("/availability", async (req, res) => {
     res.status(201).json(result.rows);
   } else {
     res.status(400).send("missing info or duplicated row");
+  }
+});
+
+// post method customer and order
+app.post("/customers/:customerId/orders", async function (req, res) {
+  const customerId = req.params.customerId;
+  const { orderDate, reference } = req.body;
+  const customerIdCheck = await db.query("SELECT * FROM customers WHERE id = $1", [customerId]).then((data) => data.rowCount > 0);
+  if (orderDate && reference && customerId && customerIdCheck) {
+    db.query("INSERT INTO orders (order_date, order_reference,customer_id) VALUES ($1, $2, $3)", [orderDate, reference, customerId], (error, results) => {
+      if (error) {
+        throw error;
+      }
+      res.status(201).send(`Order added with ref: ${reference}`);
+    });
+  } else {
+    res.status(400).send("wrong information");
   }
 });
 
@@ -147,6 +164,26 @@ app.get("/products", (req, res) => {
       console.error(err);
       res.status(500).json(err);
     });
+});
+
+// get method customer and order
+app.get("/customers/:customerId/orders", async function (req, res) {
+  const customerId = req.params.customerId;
+  const customerIdCheck = await db.query("SELECT * FROM customers WHERE id = $1", [customerId]).then((data) => data.rowCount > 0);
+  if (customerId && customerIdCheck) {
+    db.query(
+      "SELECT o.order_reference, o.order_date, p.product_name, pa.unit_price, s.supplier_name, oi.quantity FROM product_availability pa INNER JOIN products p ON (pa.prod_id = p.id ) INNER JOIN suppliers s ON s.id = pa.supp_id INNER JOIN order_items oi ON oi.product_id = p.id INNER JOIN orders o ON o.id = oi.order_id INNER JOIN customers c ON c.id = o.customer_id WHERE c.id = $1",
+      [customerId],
+      (error, results) => {
+        if (error) {
+          throw error;
+        }
+        res.status(200).json(results.rows);
+      }
+    );
+  } else {
+    res.status(400).send("wrong information");
+  }
 });
 
 app.listen(8080, function () {
