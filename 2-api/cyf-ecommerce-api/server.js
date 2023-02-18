@@ -3,6 +3,7 @@ const bodyParser = require("body-parser");
 const app = express();
 
 const { Pool } = require("pg");
+const { query } = require("express");
 
 app.use(bodyParser.json());
 
@@ -56,6 +57,41 @@ app.get("/products", function (req, res) {
 });
 
 //POST
+app.post("/availability", function (req, res) {
+  const prodId = req.body.prodId;
+  const suppId = req.body.suppId;
+  const price = req.body.price;
+
+  if (price < 0 || typeof price !== "number") {
+    return res.status(400).send("Error: the price is not a positive number.");
+  }
+
+  const subQuery1 = "select 1 from product_availability where prod_id = $1";
+  const subQuery2 = "select 1 from product_availability where supp_id= $1";
+  const query =
+    "INSERT INTO product_availability (prod_id, supp_id, unit_price) " +
+    "VALUES ($1, $2, $3) ";
+
+  db.query(subQuery1, [prodId], (err, result) => {
+    if (result.rowCount <= 0) {
+      return res
+        .status(400)
+        .send("Error: the product Id is not exist in the database.");
+    } else {
+      db.query(subQuery2, [suppId], (err, result) => {
+        if (result.rowCount <= 0) {
+          return res
+            .status(400)
+            .send("Error: the supplier Id is not exist in the database.");
+        } else {
+          db.query(query, [prodId, suppId, price], (err, result) => {
+            res.send(`Product ${prodId} created.`);
+          });
+        }
+      });
+    }
+  });
+});
 
 app.post("/customers", function (req, res) {
   const newName = req.body.name;
