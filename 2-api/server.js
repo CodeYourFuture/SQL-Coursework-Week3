@@ -2,6 +2,9 @@ const express = require("express");
 const app = express();
 const { Pool } = require("pg");
 
+const bodyParser = require("body-parser");
+app.use(bodyParser.json());
+
 app.get("/", (req, res) => {
   res.send("Database Project");
 });
@@ -35,6 +38,30 @@ app.get("/customers/:id", function (req, res) {
       }
     }
   );
+});
+
+app.post("/customers", function (req, res) {
+  const newName = req.body.name;
+  const nweAddress = req.body.address;
+  const newCity = req.body.city;
+  const newCountry = req.body.country;
+
+  if (!newName || !nweAddress || !newCity || !newCountry) {
+    return res.status(400).send("Missing required field(s).");
+  }
+
+  const query =
+    "INSERT INTO customers (name, address, city, country) " +
+    "VALUES ($1, $2, $3, $4) returning id";
+
+  db.query(query, [newName, nweAddress, newCity, newCountry], (err, result) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).send("Error creating customer.");
+    }
+    const newID = result.rows[0].id;
+    res.send(`New customer added. New Id = ${newID}`);
+  });
 });
 
 app.get("/products", function (req, res) {
