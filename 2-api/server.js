@@ -20,10 +20,21 @@ app.get("/customers", function (req, res) {
   });
 });
 
-app.get("/suppliers", function (req, res) {
-  db.query("SELECT * FROM suppliers", (error, result) => {
-    res.json(result.rows);
-  });
+app.get("/customers/:id", function (req, res) {
+  const custId = parseInt(req.params.id);
+  db.query(
+    "SELECT * FROM customers WHERE id = $1",
+    [custId],
+    function (err, result) {
+      if (err) {
+        console.error(err);
+        res.status(500).send("Error retrieving customer from database");
+      } else {
+        res.json(result.rows[0]);
+        console.log(result.rows[0]);
+      }
+    }
+  );
 });
 
 app.get("/products", function (req, res) {
