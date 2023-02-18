@@ -14,6 +14,7 @@ const db = new Pool({
   password: "cyf123",
   port: 5432,
 });
+
 // GET
 
 app.get("/customers", function (req, res) {
@@ -30,6 +31,25 @@ app.get("/customers/:customerId", function (req, res) {
       res.json(result.rows);
     }
   );
+});
+
+app.get("/customers/:customerId/orders", async function (req, res) {
+  const custId = parseInt(req.params.customerId);
+
+  const query1 =
+    "select * from customers c where exists (select 1 from orders o where o.customer_id = $1)";
+  const query2 =
+    "select o.order_reference, o.order_date,  p.product_name, pa.unit_price, s.supplier_name, oi.quantity from  orders o join order_items oi on (o.id = oi.order_id) join product_availability pa on (oi.product_id = pa.prod_id) join products p on (pa.prod_id = p.id) join suppliers s on (s.id = pa.supp_id) where o.customer_id = $1";
+
+  let result = await db.query(query1, [custId]);
+
+  if (result.rowCount > 0) {
+    db.query(query2, [custId], function (err, result) {
+      return res.status(200).send(result.rows);
+    });
+  } else {
+    return res.status(400).send("Error: this customer does not have orders.");
+  }
 });
 
 app.get("/suppliers", function (req, res) {
@@ -120,6 +140,33 @@ app.post("/products", function (req, res) {
   });
 });
 
+app.post("/customers/:customerId/orders", async function (req, res) {
+  const orderDate = req.body.orderDate;
+  const orderRef = req.body.orderRef;
+  const custId = parseInt(req.params.customerId);
+
+  let result = await db.query("SELECT 1 from customers WHERE id = " + custId);
+
+  if (result.rowCount === 0) {
+    return res.send(
+      "Error: customerId not corresponds to an existing customer."
+    );
+  } else {
+    const query =
+      "INSERT INTO orders (order_date, order_reference, customer_id) " +
+      "VALUES ($1, $2, $3)" +
+      "RETURNING id";
+
+    db.query(query, [orderDate, orderRef, custId], (err, result) => {
+      if (err === undefined) {
+        res.status(201).send(`Order ${orderRef} created.`);
+      } else {
+        res.send(`${err}`);
+      }
+    });
+  }
+});
+
 //PUT
 app.put("/customers/:customerId", function (req, res) {
   const custId = req.params.customerId;
@@ -148,7 +195,23 @@ app.delete("/orders/:orderId", function (req, res) {
         .then(() => res.send(`Order ${Id} deleted!`))
         .catch((e) => console.error(e));
     })
-    .catch((e) => console.error(e));
+    .catch((e) => res.send(`${e}`));
+});
+
+app.delete("/customers/:customerId", async function (req, res) {
+  const custId = parseInt(req.params.customerId);
+
+  const query =
+    "select * from customers c where exists (select 1 from orders o where o.customer_id = $1)";
+  let result = await db.query(query, [custId]);
+
+  if (result.rowCount > 0) {
+    return res.status(400).send("Error: this customer has orders.");
+  } else {
+    db.query("DELETE FROM customers WHERE id=$1", [custId])
+      .then(() => res.send(`Customer ${custId} deleted!`))
+      .catch((e) => res.send(`${e}`));
+  }
 });
 
 app.listen(3100, function () {
