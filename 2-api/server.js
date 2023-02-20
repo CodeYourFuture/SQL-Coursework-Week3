@@ -266,6 +266,28 @@ app.delete("/customers/:customerId", (req, res) => {
   );
 });
 
+app.get("/customers/:customerId/orders", (req, res) => {
+  const customerId = Number(req.params.customerId);
+
+  const query =
+    "SELECT o.order_reference, o.order_date, p.product_name, pa.unit_price, s.supplier_name, oi.quantity " +
+    "FROM orders o " +
+    "JOIN customers c ON o.customer_id = c.id " +
+    "JOIN order_items oi ON o.id = oi.order_id " +
+    "JOIN products p ON oi.product_id = p.id " +
+    "JOIN product_availability pa ON p.id = pa.prod_id " +
+    "JOIN suppliers s ON pa.supp_id = s.id " +
+    "WHERE c.id = $1";
+
+  db.query(query, [customerId], (err, result) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).send("Error retrieving orders.");
+    }
+    res.json(result.rows);
+  });
+});
+
 app.listen(5000, function () {
   console.log("Server is listening on port 5000. Ready to accept requests!");
 });
