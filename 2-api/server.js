@@ -66,7 +66,6 @@ app.post("/customers", function (req, res) {
 
 app.get("/products", function (req, res) {
   const productName = req.query.name;
-  console.log(productName);
 
   db.query(
     "SELECT * FROM products WHERE product_name LIKE CONCAT('%', $1::text, '%')",
@@ -80,6 +79,26 @@ app.get("/products", function (req, res) {
       }
     }
   );
+});
+
+app.post("/products", (req, res) => {
+  const newProduct = req.body.product_name;
+
+  if (!newProduct) {
+    return res.status(400).send("Missing required field(s).");
+  }
+
+  const query =
+    "INSERT INTO products (product_name) " + "VALUES ($1) RETURNING id";
+
+  db.query(query, [newProduct], (error, result) => {
+    if (error) {
+      console.error(err);
+      return res.status(500).send("Error creating customer.");
+    }
+    const newID = result.rows[0].id;
+    res.status(200).send(`New product added. New Id = ${newID}`);
+  });
 });
 
 app.listen(5000, function () {
