@@ -151,6 +151,44 @@ app.post("/availability", (req, res) => {
   });
 });
 
+app.post("/customers/:customerId/orders", (req, res) => {
+  const { order_date, order_reference } = req.body;
+  const customerId = req.params.customerId;
+
+  if (!order_date || !order_reference || !customerId) {
+    return res.status(400).send("Missing required field(s).");
+  }
+
+  const checkCustomerQuery = "SELECT COUNT(*) FROM customers WHERE id = $1";
+  db.query(checkCustomerQuery, [customerId], (err, result) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).send("Error checking customer ID.");
+    }
+
+    const customerCount = result.rows[0].count;
+    if (customerCount === 0) {
+      return res.status(400).send("Invalid customer ID.");
+    }
+
+    const query =
+      "INSERT INTO orders (order_date, order_reference, customer_id) " +
+      "VALUES ($1, $2, $3)";
+
+    db.query(
+      query,
+      [order_date, order_reference, customerId],
+      (err, result) => {
+        if (err) {
+          console.error(err);
+          return res.status(500).send("Error creating order.");
+        }
+        res.status(200).send("New order created.");
+      }
+    );
+  });
+});
+
 app.listen(5000, function () {
   console.log("Server is listening on port 5000. Ready to accept requests!");
 });
