@@ -211,6 +211,29 @@ app.post("/customers/:customerId/orders", (req, res) => {
   });
 });
 
+app.delete("/orders/:orderId", (req, res) => {
+  const orderId = Number(req.params.orderId);
+
+  db.query(
+    "DELETE FROM order_items WHERE order_id = $1",
+    [orderId],
+    (err, result) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).send("Error deleting order items.");
+      }
+
+      db.query("DELETE FROM orders WHERE id = $1", [orderId], (err, result) => {
+        if (err) {
+          console.error(err);
+          return res.status(500).send("Error deleting order.");
+        }
+        res.status(200).send("Order and associated items deleted.");
+      });
+    }
+  );
+});
+
 app.listen(5000, function () {
   console.log("Server is listening on port 5000. Ready to accept requests!");
 });
