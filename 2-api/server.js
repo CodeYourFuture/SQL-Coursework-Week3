@@ -64,6 +64,28 @@ app.post("/customers", function (req, res) {
   });
 });
 
+app.put("/customers/:customerId", (req, res) => {
+  const { name, address, city, country } = req.body;
+  const custId = Number(req.params.customerId);
+
+  if (!name || !address || !city || !country) {
+    return res.status(400).send("Missing required field(s).");
+  }
+
+  db.query(
+    "UPDATE customers SET name=$1, address=$2, city=$3, country=$4 WHERE id=$5",
+    [name, address, city, country, custId],
+    (error, result) => {
+      if (error) {
+        console.error(error);
+        res.status(500).send("Error retrieving products from database");
+      } else {
+        res.status(200).json(`Customer with id:${custId} updated.`);
+      }
+    }
+  );
+});
+
 app.get("/products", function (req, res) {
   const productName = req.query.name;
 
