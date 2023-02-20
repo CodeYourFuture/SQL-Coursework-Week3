@@ -222,6 +222,25 @@ app.delete("/customers/:customerId", async (req, res) => {
   }
 });
 
+app.get("/customers/:customerId/orders", async (req, res) => {
+  const customerId = req.params.customerId;
+  try {
+    const result = await pool.query(
+      `SELECT orders.order_reference, orders.order_date, products.product_name, product_availability.unit_price, suppliers.supplier_name, order_items.quantity
+      FROM orders
+      JOIN order_items ON orders.id = order_items.order_id
+      JOIN products ON order_items.product_id = products.id
+      JOIN product_availability ON order_items.product_id = product_availability.prod_id
+      JOIN suppliers ON product_availability.supp_id = suppliers.id
+      WHERE orders.customer_id = $1`,
+      [customerId]
+    );
+    res.json(result.rows);
+  } catch (error) {
+    console.log(error);
+  }
+});
+
 app.listen(3000, () => {
   console.log("Server is listening on port 3000. Ready to accept requests!");
 });
