@@ -101,6 +101,56 @@ app.post("/products", (req, res) => {
   });
 });
 
+app.post("/availability", (req, res) => {
+  const { price, supId, prodId } = req.body;
+
+  if (!prodId || !supId || !price) {
+    return res.status(400).send("Missing required field(s).");
+  }
+
+  if (!Number.isInteger(price) || price < 0) {
+    return res.status(400).send("Price must be a positive integer.");
+  }
+
+  const checkProductQuery = "SELECT COUNT(*) FROM products WHERE id = $1";
+  db.query(checkProductQuery, [prodId], (err, result) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).send("Error checking product ID.");
+    }
+
+    const productCount = result.rows[0].count;
+    if (productCount === 0) {
+      return res.status(400).send("Invalid product ID.");
+    }
+
+    const checkSupplierQuery = "SELECT COUNT(*) FROM suppliers WHERE id = $1";
+    db.query(checkSupplierQuery, [supId], (err, result) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).send("Error checking supplier ID.");
+      }
+
+      const supplierCount = result.rows[0].count;
+      if (supplierCount === 0) {
+        return res.status(400).send("Invalid supplier ID.");
+      }
+
+      const query =
+        "INSERT INTO product_availability (prod_id, supp_id, unit_price) " +
+        "VALUES ($1, $2, $3)";
+
+      db.query(query, [prodId, supId, price], (err, result) => {
+        if (err) {
+          console.error(err);
+          return res.status(500).send("Error creating availability record.");
+        }
+        res.status(200).send("New availability record created.");
+      });
+    });
+  });
+});
+
 app.listen(5000, function () {
   console.log("Server is listening on port 5000. Ready to accept requests!");
 });
