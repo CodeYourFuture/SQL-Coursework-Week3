@@ -18,6 +18,8 @@ In the following homework, you will create new API endpoints in the NodeJS appli
 
 - Add a new POST endpoint `/customers` to create a new customer with name, address, city and country.
 
+
+
 - Add a new POST endpoint `/products` to create a new product.
 
 - Add a new POST endpoint `/availability` to create a new product availability (with a price and a supplier id). Check that the price is a positive integer and that both the product and supplier ID's exist in the database, otherwise return an error.
