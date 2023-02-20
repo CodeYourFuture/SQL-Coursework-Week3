@@ -234,6 +234,38 @@ app.delete("/orders/:orderId", (req, res) => {
   );
 });
 
+app.delete("/customers/:customerId", (req, res) => {
+  const customerId = Number(req.params.customerId);
+
+  db.query(
+    "SELECT COUNT(*) FROM orders WHERE customer_id = $1",
+    [customerId],
+    (err, result) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).send("Error checking for customer orders.");
+      }
+
+      const orderCount = result.rows[0].count;
+      if (orderCount > 0) {
+        return res.status(400).send("Customer has associated orders.");
+      }
+
+      db.query(
+        "DELETE FROM customers WHERE id = $1",
+        [customerId],
+        (err, result) => {
+          if (err) {
+            console.error(err);
+            return res.status(500).send("Error deleting customer.");
+          }
+          res.status(200).send("Customer deleted.");
+        }
+      );
+    }
+  );
+});
+
 app.listen(5000, function () {
   console.log("Server is listening on port 5000. Ready to accept requests!");
 });
