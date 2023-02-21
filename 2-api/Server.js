@@ -17,27 +17,32 @@ const db = new Pool({
 app.get('/',(req,res)=>{
     res.send('Hello')
 })
+// get endpoint for customers table
 
 app.get("/customers", async function(req, res) {
     const rs=await db.query('SELECT * FROM customers')
     res.json(rs.rows)
 });
+//get endpoint for suppliers table
 app.get("/suppliers", async function(req, res) {
     const rs=await db.query('SELECT * FROM suppliers')
     res.json(rs.rows)
 });
+//get endpoint for products table
 app.get("/products", async function(req, res) {
     const rs=await db.query('SELECT product_name FROM products')
     res.json(rs.rows)
 });
-
+ //get endpoint for customers table with specific id
 app.get("/customers/:id", function(req, res) {
     let custId = parseInt(req.params.id)
     db.query("SELECT * FROM customers WHERE  id = $1", [custId])
      .then ((result) =>res.json(result.rows))
-        // TODO - more code here..)
+        
       .catch(err=> res.status(500).json({error:err}));
   })
+
+  //post endpoint for customers table
   app.post("/customers", function (req, res) {
     const newName = req.body.name;
     const newAddress = req.body.address;
@@ -52,6 +57,8 @@ app.get("/customers/:id", function(req, res) {
     .then( (result) => res.send("Customer created."))
     .catch(err=>res.status(500).json({error:err}))
   });
+
+  //post endpoint for productss table
   app.post("/products",async function(req,res){
     const newProductname=req.body.product_name;
     const query=
@@ -61,17 +68,19 @@ app.get("/customers/:id", function(req, res) {
   })
 app.get("/products",(req,res)=>{
     const productName=req.query.product_name
-    const query=`SELECT product_name,unit_price, supplier_name              FROM products                 INNER JOIN product_availability ON product_availability.prod_id = products.id                      INNER JOIN suppliers ON product_availability.supp_id  = suppliers.id                      WHERE product_name ILIKE '%${                        productName || ""                }%' ; `
+    const query=`SELECT product_name,unit_price, supplier_name      FROM products      INNER JOIN product_availability ON product_availability.prod_id = products.id                      INNER JOIN suppliers ON product_availability.supp_id  = suppliers.id                      WHERE product_name ILIKE '%${                        productName || ""                }%' ; `
     db.query(query,(err,result)=>{
         res.send(result.rows)
     })
     
 })
 
+app.post('/availability/product_id/supplier_id',async(req,res)=>{
+    
+})
 
 
-
-
+//put endpoint for customers table
 
  app.put("/customers/:id",function(req,res){
     const custId=+req.params.id
@@ -86,6 +95,7 @@ app.get("/products",(req,res)=>{
         console.error(err);
         res.status(500).json({error:err})})
  })
+ //delete endpoint for orders table
 app.delete("/orders/:id",function (req,res){
     const orderId=+req.params.id
     const query="DELETE FROM orders WHERE id=$1"
