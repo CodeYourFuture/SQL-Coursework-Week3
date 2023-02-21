@@ -10,7 +10,7 @@ app.get("/", (req, res) => {
 });
 
 const db = new Pool({
-  user: "miladebrahimpour", // replace with you username
+  user: "saharkarimi", // replace with you username
   host: "localhost",
   database: "cyf_ecommerce",
   password: process.env.USER_PASS,
