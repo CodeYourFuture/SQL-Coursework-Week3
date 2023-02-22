@@ -57,6 +57,7 @@ app.get("/products", async (req, res) => {
   }
 });
 
+// POST customer API End point
 app.post("/customers", async (req, res) => {
   try {
     const { name, address, city, country } = req.body;
@@ -66,6 +67,23 @@ app.post("/customers", async (req, res) => {
         RETURNING *
       `;
     const result = await pool.query(query, [name, address, city, country]);
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Something went wrong!" });
+  }
+});
+
+// POST product API End point
+app.post("/products", async (req, res) => {
+  try {
+    const { product_name } = req.body;
+    const query = `
+        INSERT INTO products (product_name)
+        VALUES ($1)
+        RETURNING *
+      `;
+    const result = await pool.query(query, [product_name]);
     res.status(201).json(result.rows[0]);
   } catch (error) {
     console.error(error);
