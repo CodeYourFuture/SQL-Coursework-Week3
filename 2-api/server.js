@@ -55,7 +55,7 @@ app.get("/customers/:customerId", function (req, res) {
             console.error(error);
             res.status(500).json(error);
         });
-});  
+});
 
 // Add a new customer
 app.post("/customers", (req, res) => {
@@ -179,4 +179,20 @@ app.delete("/orders/:orderId", function (req, res) {
             console.error(error);
             res.status(500).json(error);
         });
+});
+
+//Delete customer
+app.delete("/customers/:customersId", function (req, res) {
+    let id = parseInt(req.params.customersId); // int = integer
+    pool
+        .query("DELETE FROM customers WHERE id=$1", [id])
+        .then(() => res.status(200).json(`customer ${id} deleted!`))
+        .catch((error) => {
+            console.error(error);
+            res.status(500).json(error);
+        });
+});
+
+app.listen(3000, function () {
+    console.log("Server is listening on port 3000. Ready to accept requests!");
 });
