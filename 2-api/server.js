@@ -174,17 +174,15 @@ app.delete("/orders/:orderId", async (req, res) => {
 
     // Delete the order and associated order items in a transaction
     await pool.query("BEGIN");
-    await pool.query("DELETE FROM orders WHERE id = $1", [orderId]);
     await pool.query("DELETE FROM order_items WHERE id = ANY($1)", [
       orderItemIds,
     ]);
+    await pool.query("DELETE FROM orders WHERE id = $1", [orderId]);
     await pool.query("COMMIT");
 
-    res
-      .status(200)
-      .json({
-        message: "Order and associated order items deleted successfully.",
-      });
+    res.status(200).json({
+      message: "Order and associated order items deleted successfully.",
+    });
   } catch (error) {
     await pool.query("ROLLBACK");
     console.error(error);
