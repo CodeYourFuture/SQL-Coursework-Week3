@@ -190,6 +190,65 @@ app.delete("/orders/:orderId", async (req, res) => {
   }
 });
 
+// DELETE API end point to delete customers without orders
+
+app.delete("/customers/:customerId", async (req, res) => {
+  const customerId = req.params.customerId;
+  try {
+    // Check if customer has associated orders
+    const orders = await pool.query(
+      "SELECT * FROM orders WHERE customer_id = $1",
+      [customerId]
+    );
+    if (orders.rows.length > 0) {
+      return res.status(400).json({
+        error: "Customer has associated orders and cannot be deleted.",
+      });
+    }
+
+    // Delete the customer
+    await pool.query("DELETE FROM customers WHERE id = $1", [customerId]);
+
+    res.status(200).json({ message: "Customer deleted successfully." });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Something went wrong!" });
+  }
+});
+
+// GET API point to send customer order information
+
+app.get("/customers/:customerId/orders", async (req, res) => {
+  const customerId = req.params.customerId;
+  try {
+    const orders = await pool.query(
+      "SELECT * FROM orders WHERE customer_id = $1",
+      [customerId]
+    );
+    const result = [];
+    for (const order of orders.rows) {
+      const orderItem = await pool.query(
+        `SELECT oi.order_id, oi.quantity, pa.unit_price, p.product_name, s.supplier_name 
+        FROM order_items oi
+        JOIN product_availability pa ON oi.product_id = pa.prod_id AND oi.supplier_id = pa.supp_id
+        JOIN products p ON oi.product_id = p.id
+        JOIN suppliers s ON oi.supplier_id = s.id
+        WHERE oi.order_id = $1`,
+        [order.id]
+      );
+      result.push({
+        order_reference: order.order_reference,
+        order_date: order.order_date,
+        items: orderItem.rows,
+      });
+    }
+    res.status(200).json(result);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Something went wrong!" });
+  }
+});
+
 app.listen(3000, () => {
   console.log("Server is listening on port 3000");
 });
