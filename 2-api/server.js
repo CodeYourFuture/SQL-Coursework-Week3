@@ -29,13 +29,7 @@ app.get("/customers", function (req, res) {
   });
 });
 
-app.get("/orders", function (req, res) {
-  //    console.log(res.send("hello"))
-  db.query("SELECT * FROM orders", (error, result) => {
-    // console.log(result)
-    res.json(result.rows);
-  });
-});
+
 
 app.get("/customers/:customerId", function (req, res) {
   var custId = parseInt(req.params.customerId);
@@ -62,7 +56,7 @@ app.post("/customers", function (request, response) {
 
 // Add a new POST endpoint /customers/:customerId/orders to create a new order (including an order date, and an order reference) for a customer. Check that the customerId corresponds to an existing customer or return an error.
 
-app.post("customers/:customersId/orders", function (request, response) {
+app.post("/customers/:customersId/orders", function (request, response) {
   const custId = parseInt(request.params.customersId);
   // const newOrderId = request.body.id;
   const newOrderDate = request.body.order_date;
@@ -181,3 +175,86 @@ app.get("/products/name", function (req, res) {
     );
   }
 });
+
+
+// Add a new POST endpoint /products to create a new product.
+
+app.post("/products", function(request, response){
+  const newProduct = request.body.product_name
+//  if the parameter for product_name is missing
+   if (!newProduct) {
+     return response.status(400).send("Missing required field(s).");
+   }
+
+
+  //  query to add new product name
+  const query =
+    "INSERT INTO products (product_name) " + "VALUES ($1) RETURNING id";
+
+db.query(query, [newProduct],(error, result)=> {
+  if(error){
+    console.error(err)
+    return response.status(500).send("Error creating customer.")
+
+  }
+  const newId = result.rows[0].id
+  response.status(200).send(`New product added. New Id = ${newId}`)
+})
+})
+
+
+// Add a new POST endpoint /availability to create a new product availability (with a price and a supplier id). Check that the price is a positive integer and that both the product and supplier ID's exist in the database, otherwise return an error.
+
+
+app.post("/availability", (request, response) => {
+  const { price, supp_Id, prod_Id } = request.body;
+
+  if (!prod_Id || !supp_Id || !price) {
+    return response.status(400).send("Missing required field(s).");
+  }
+
+  if (!Number.isInteger(price) || price < 0) {
+    return response.status(400).send("Price must be a positive integer.");
+  }
+
+  const checkProductQuery = "SELECT COUNT(*) FROM products WHERE id = $1";
+  db.query(checkProductQuery, [prod_Id], (err, result) => {
+    if (err) {
+      console.error(err);
+      return response.status(500).send("Error checking product ID.");
+    }
+
+    const productCount = result.rows[0].count;
+    if (productCount === 0) {
+      return response.status(400).send("Invalid product ID.");
+    }
+
+    const checkSupplierQuery = "SELECT COUNT(*) FROM suppliers WHERE id = $1";
+    db.query(checkSupplierQuery, [supp_Id], (err, result) => {
+      if (err) {
+        console.error(err);
+        return response.status(500).send("Error checking supplier ID.");
+      }
+
+      const supplierCount = result.rows[0].count;
+      if (supplierCount === 0) {
+        return response.status(400).send("Invalid supplier ID.");
+      }
+
+      const query =
+        "INSERT INTO product_availability (prod_id, supp_id, unit_price) " +
+        "VALUES ($1, $2, $3)";
+
+      db.query(query, [prod_Id, supp_Id, price], (err, result) => {
+        if (err) {
+          console.error(err);
+          return response.status(500).send("Error creating availability record.");
+        }
+        response.status(200).send("New availability record created.");
+      });
+    });
+  });
+});
+
+
+// Add a new DELETE endpoint /orders/:orderId to delete an existing order along with all the associated order items.
