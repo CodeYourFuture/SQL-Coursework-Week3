@@ -18,6 +18,26 @@ app.listen(3000, () => {
   console.log("Server is listening on port 3000");
 });
 
+// Get customer by ID API end point
+
+app.get("/customers/:customerId", async (req, res) => {
+  try {
+    const { customerId } = req.params;
+    const query = "SELECT * FROM customers WHERE id = $1";
+    const result = await pool.query(query, [customerId]);
+    if (result.rowCount === 0) {
+      res
+        .status(404)
+        .json({ error: `No customer with ID ${customerId} found` });
+    } else {
+      res.json(result.rows[0]);
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Something went wrong!" });
+  }
+});
+
 //Get All Products or a specific product name End Point
 
 app.get("/products", async (req, res) => {
