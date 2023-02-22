@@ -91,6 +91,107 @@ app.post("/products", async (req, res) => {
   }
 });
 
+//POST Customer order End point
+
+app.post("/customers/:customerId/orders", async (req, res) => {
+  const customerId = req.params.customerId;
+  const { order_date, order_reference } = req.body;
+
+  try {
+    // Check if customer exists
+    const customer = await pool.query("SELECT * FROM customers WHERE id = $1", [
+      customerId,
+    ]);
+    if (customer.rows.length === 0) {
+      return res.status(404).json({ error: "Customer not found." });
+    }
+
+    // Insert new order
+    const query = `
+        INSERT INTO orders (order_date, order_reference, customer_id)
+        VALUES ($1, $2, $3)
+        RETURNING *
+      `;
+    const result = await pool.query(query, [
+      order_date,
+      order_reference,
+      customerId,
+    ]);
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Something went wrong!" });
+  }
+});
+
+// PUT API end point to update Customer Details
+
+app.put("/customers/:customerId", async (req, res) => {
+  const customerId = req.params.customerId;
+  const { name, address, city, country } = req.body;
+
+  try {
+    // Check if customer exists
+    const customer = await pool.query("SELECT * FROM customers WHERE id = $1", [
+      customerId,
+    ]);
+    if (customer.rows.length === 0) {
+      return res.status(404).json({ error: "Customer not found." });
+    }
+
+    // Update customer
+    const query = `
+        UPDATE customers
+        SET name = $1, address = $2, city = $3, country = $4
+        WHERE id = $5
+        RETURNING *
+      `;
+    const result = await pool.query(query, [
+      name,
+      address,
+      city,
+      country,
+      customerId,
+    ]);
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Something went wrong!" });
+  }
+});
+
+// DELETE API end point to delete the order and its details
+
+app.delete("/orders/:orderId", async (req, res) => {
+  const orderId = req.params.orderId;
+  try {
+    // Get order items associated with the order
+    const orderItems = await pool.query(
+      "SELECT * FROM order_items WHERE order_id = $1",
+      [orderId]
+    );
+    const orderItemIds = orderItems.rows.map((item) => item.id);
+
+    // Delete the order and associated order items in a transaction
+    await pool.query("BEGIN");
+    await pool.query("DELETE FROM orders WHERE id = $1", [orderId]);
+    await pool.query("DELETE FROM order_items WHERE id = ANY($1)", [
+      orderItemIds,
+    ]);
+    await pool.query("COMMIT");
+
+    res
+      .status(200)
+      .json({
+        message: "Order and associated order items deleted successfully.",
+      });
+  } catch (error) {
+    await pool.query("ROLLBACK");
+    console.error(error);
+    res.status(500).json({ error: "Something went wrong!" });
+  }
+});
+
 app.listen(3000, () => {
   console.log("Server is listening on port 3000");
 });
