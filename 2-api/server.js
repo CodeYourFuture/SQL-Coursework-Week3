@@ -3,6 +3,8 @@ const pool = require("./dbConnection");
 
 const app = express();
 
+app.use(express.json());
+
 // Get All customers End Point
 app.get("/customers", async (req, res) => {
   try {
@@ -12,10 +14,6 @@ app.get("/customers", async (req, res) => {
     console.error(err);
     res.status(500).json({ error: "Internal Server Error" });
   }
-});
-
-app.listen(3000, () => {
-  console.log("Server is listening on port 3000");
 });
 
 // Get customer by ID API end point
@@ -49,7 +47,7 @@ app.get("/products", async (req, res) => {
         JOIN product_availability ON products.id = product_availability.prod_id
         JOIN suppliers ON suppliers.id = product_availability.supp_id
         WHERE ($1::text IS NULL OR products.product_name ILIKE $1)
-      `;
+        `;
     const values = [name ? `%${name}%` : null];
     const result = await pool.query(query, values);
     res.json(result.rows);
@@ -57,4 +55,24 @@ app.get("/products", async (req, res) => {
     console.error(error);
     res.status(500).json({ error: "Something went wrong!" });
   }
+});
+
+app.post("/customers", async (req, res) => {
+  try {
+    const { name, address, city, country } = req.body;
+    const query = `
+        INSERT INTO customers (name, address, city, country)
+        VALUES ($1, $2, $3, $4)
+        RETURNING *
+      `;
+    const result = await pool.query(query, [name, address, city, country]);
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Something went wrong!" });
+  }
+});
+
+app.listen(3000, () => {
+  console.log("Server is listening on port 3000");
 });
