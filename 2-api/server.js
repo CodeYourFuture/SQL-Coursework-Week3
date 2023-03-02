@@ -180,6 +180,51 @@ app.post("/customers/:customerId/orders", async function (req, res) {
   }
 });
 
+// PUT Endpoint 
+
+app.put("/customers/:customerId", function (req, res) {
+  const customerId = req.params.customerId;
+   let { name, address, city, country} = req.body;
+
+  db.query(
+    "UPDATE customers SET name = $2, address = $3, city = $4, country = $5 WHERE id = $1",
+    [customerId, name, address, city, country]
+  )
+    .then(() => res.send(`Customer with Customer Id ${customerId} updated! New data : ${JSON.stringify(req.body)}`))
+    .catch((err) => {
+      res.status(500).json({ error: err });
+    });
+});
+
+// Delete Endpoint
+
+app.delete("/orders/:orderId", function (req, res) {
+  const orderId = req.params.orderId;
+
+  db.query("DELETE FROM order_items WHERE order_id=$1", [orderId])
+    .then(() => {
+      db.query("DELETE FROM orders WHERE id=$1", [orderId])
+        .then(() => res.send(`Order ${orderId} deleted!`))
+    })
+    .catch((err) => res.send(`${err}`));
+});
+
+app.delete("/customers/:customerId", async (req, res) => {
+  const customerId = +req.params.customerId;
+
+  const query =
+    "SELECT * FROM customers c WHERE exists (SELECT 1 FROM orders o WHERE o.customer_id = $1)";
+  let result = await db.query(query, [customerId]);
+
+  if (result.rowCount > 0) {
+    return res.status(400).send("Error: this customer has orders.");
+  } else {
+    db.query("DELETE FROM customers WHERE id = $1", [customerId])
+      .then(() => res.send(`Customer with customer id ${customerId} deleted!`))
+      .catch((err) => res.send(`${err}`));
+  }
+});
+
 app.listen(3000, function () {
   console.log("Server is listening on port 3000. Ready to accept requests!");
 });
