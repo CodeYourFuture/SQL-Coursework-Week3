@@ -53,6 +53,12 @@ app.get("/availability", (req, res) => {
     });
 });
 
+app.get("/suppliers", (req, res) => {
+    db.query("SELECT * FROM suppliers", (err, result) => {
+        res.json(result.rows);
+    });
+});
+
 app.get("/customers/:customerId/orders", async function (req, res) {
     const custId = +req.params.customerId;
 
@@ -142,7 +148,7 @@ app.post("/availability", (req, res) => {
         }
     });
     db.query(query, [prod_id, supp_id, unit_price], (err, result) => {
-        res.status(201).send("Product succesfully created.");
+        res.status(201).send("Product successfully created.");
     });
 });
 
@@ -216,7 +222,7 @@ app.delete("/customers/:customerId", async (req, res) => {
     }
 });
 
-app.listen(3000, function () {
-    console.log("Server is listening on port 3000. Ready to accept requests!");
+app.listen(3030, function () {
+    console.log("Server is listening on port 3030. Ready to accept requests!");
 });
 
