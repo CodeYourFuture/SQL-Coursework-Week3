@@ -5,7 +5,7 @@ const { Pool } = require("pg");
 app.use(express.json());
 
 const db = new Pool({
-    user: "ekremteke",
+    user: "tekre",
     host: "localhost",
     database: "cyf_ecommerce",
     password: "185606",
