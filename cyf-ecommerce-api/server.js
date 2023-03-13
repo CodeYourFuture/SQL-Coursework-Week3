@@ -107,7 +107,7 @@ app.post("/availability", function (req, res) {
   const avProdSupp = req.body.supp_id;
   const avProdPrice = req.body.unit_price;
 
-  if (!Number.isInteger(avProdName) || newHotelRooms <= 0) {
+  if (!Number.isInteger(avProdName) || avProdName <= 0) {
     return res
       .status(400)
       .send("The number of the product should be a positive integer.");
@@ -136,7 +136,7 @@ app.post("/availability", function (req, res) {
 
 app.post("/orders", function (req, res) {
   const orderDate = req.body.order_date;
-  const orderReferrence = req.body.order_reference;
+  const orderReference = req.body.order_reference;
   const orderCustomerId = req.body.customer_id;
 
   if (!Number.isInteger(orderCustomerId) || orderCustomerId  <= 0) {
@@ -146,7 +146,7 @@ app.post("/orders", function (req, res) {
   }
 
   pool
-    .query("SELECT * FROM orders WHERE order_date =$1", [orderReferrence])
+    .query("SELECT * FROM orders WHERE order_date =$1", [orderReference])
     .then((result) => {
       if (result.rows.length > 0) {
         return res
@@ -156,7 +156,7 @@ app.post("/orders", function (req, res) {
         const query =
           "INSERT INTO orders (order_date, order_reference, customer_id) VALUES ($1, $2, $3)";
         pool
-          .query(query, [orderDate, orderReferrence, orderCustomerId])
+          .query(query, [orderDate, orderReference, orderCustomerId])
           .then(() => res.send("order created!"))
           .catch((error) => {
             console.error(error);
@@ -232,7 +232,6 @@ app.delete("/orders/:orderId", function (req, res) {
 app.delete("/customers/:customerId", function (req, res) {
   const customerId = req.params.customerId;
 
-
   pool
     .query("DELETE FROM customers WHERE id=$1", [customerId])
     .then(() => res.send(`Customer ${customerId} deleted!`))
@@ -243,7 +242,7 @@ app.delete("/customers/:customerId", function (req, res) {
 });
 
 const listener = app.listen(port, () =>{
-  console.log(`port is listening on port ${port}`)
+  console.log(`listening on port ${port}`)
 })
 
 
